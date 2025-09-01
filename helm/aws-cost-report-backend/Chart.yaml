@@ -1,0 +1,7 @@
+apiVersion: v2
+appVersion: 1.16.0
+description: A Helm template for micro services in Kubernetes
+name: template
+type: application
+version: 3.0.0
+

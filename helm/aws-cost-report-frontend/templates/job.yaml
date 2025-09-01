@@ -1,0 +1,205 @@
+{{- if .Values.job.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata: 
+  {{- if .Values.job.labels.kind }}
+  name: "{{ .Values.job.name }}-{{ .Values.job.labels.kind }}"
+  {{- else }}
+  name: "{{ .Values.job.name }}"
+  {{- end }}
+  labels: {{ toYaml .Values.job.labels | nindent 4 }}
+  annotations: {{- toYaml .Values.job.podAnnotations | nindent 4 }}
+spec:
+  {{- if hasKey .Values.job "backoffLimit"  }}
+  backoffLimit: {{ .Values.job.backoffLimit }}
+  {{- end }}
+  template:
+    spec:
+      {{- range .Values.job.imagePullSecrets }}
+      imagePullSecrets:
+        - name: {{ .name }}
+      {{- end }}
+
+      {{- if and (hasKey .Values "serviceAccount") (eq .Values.serviceAccount.enabled true) }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- end }}
+
+      securityContext: {{ toYaml .Values.job.podSecurityContext | nindent 8 }}
+
+      containers: 
+      - name: {{ .Values.job.name }}
+        {{- if hasKey .Values.job "containerSecurityContext" }}
+        securityContext:
+          {{- toYaml .Values.job.containerSecurityContext | nindent 10 }}
+        {{- end }}
+        image: "{{ .Values.job.image.name }}"
+        imagePullPolicy: {{ .Values.job.image.pullPolicy }}
+
+        {{- if or (hasKey .Values.job.env "fromSecrets") (hasKey .Values.job.env "fromConfigMaps") (hasKey .Values.job.env "regular") }}
+        env: 
+        {{- if and (hasKey .Values.job.env "fromSecrets") (gt (len .Values.job.env.fromSecrets) 0) }}
+        {{- range .Values.job.env.fromSecrets }}
+        # Defined for operators only, not needed for the configuration of the services.
+        - name: {{ .envName }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .secretName }}
+              key: {{ .secretKey }}
+        {{- end }}
+        {{- end }}
+
+        {{- if hasKey .Values.job.env "regular" }}
+        {{- range $key, $value := .Values.job.env.regular }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+
+        {{- end }}
+
+        {{- if and (hasKey .Values.job.env "fromConfigMaps") (gt (len .Values.job.env.fromConfigMaps) 0) }}
+        {{- range .Values.job.env.fromConfigMaps }}
+        envFrom:
+        - configMapRef:
+            name: {{ .cmName }}
+        {{- end }}
+        {{- end }}
+
+        resources:
+          {{- toYaml .Values.job.resources | nindent 10 }}
+
+        {{- if and (hasKey .Values.job "command") (gt (len .Values.job.command) 0) }}
+        command:
+        {{- range .Values.job.command }}
+          - {{ . }}
+        {{- end }}
+        {{- end }}
+
+        {{- if and (hasKey .Values.job "args") (gt (len .Values.job.args) 0) }}
+        args:
+        {{- range .Values.job.args }}
+          - {{ . }}
+        {{- end }}
+        {{- end }}
+        
+        {{- if or (gt (len .Values.job.volumes.fromSecrets) 0) (gt (len .Values.job.volumes.fromConfigMaps) 0) (gt (len .Values.job.volumes.fromPvc) 0) (gt (len .Values.job.volumes.emptyDir) 0) }}
+        volumeMounts:
+        {{- if hasKey .Values.job.volumes "fromSecrets" }}
+        {{- range .Values.job.volumes.fromSecrets }}
+        - name: {{ .secretName }}
+          mountPath: "{{ .mountPath }}"
+          {{- if .subPath }}
+          subPath: "{{ .subPath }}"
+          {{- end }}
+          readOnly: {{ .readOnly }}
+        {{- end }}
+        {{- end }}
+
+        {{- if hasKey .Values.job.volumes "fromPvc" }}
+        {{- range .Values.job.volumes.fromPvc }}
+        - name: {{ .pvcName }}
+          mountPath: "{{ .mountPath }}"
+        {{- end }}
+        {{- end }}
+
+        {{- if hasKey .Values.job.volumes "fromConfigMaps" }}
+        {{- range .Values.job.volumes.fromConfigMaps }}
+        - name: {{ .cmName }}
+          mountPath: "{{ .mountPath }}"
+          {{- if .subPath }}
+          subPath: "{{ .subPath }}"
+          {{- end }}
+          readOnly: {{ .readOnly }}
+        {{- end }}
+        {{- end }}
+
+        {{- if hasKey .Values.job.volumes "emptyDir"}}
+        {{- range .Values.job.volumes.emptyDir }}
+        - name: {{ .dirName }}
+          mountPath: {{ .mountPath }}
+        {{- end }}
+        {{- end }}
+        
+        {{- end }}
+
+      {{- if or (gt (len .Values.job.volumes.fromSecrets) 0) (gt (len .Values.job.volumes.fromConfigMaps) 0) (gt (len .Values.job.volumes.fromPvc) 0) (gt (len .Values.job.volumes.emptyDir) 0) }}
+      volumes:
+      {{- if hasKey .Values.job.volumes "fromSecrets" }}
+      {{- range .Values.job.volumes.fromSecrets }}
+      - name: {{ .secretName }}
+        secret:
+          secretName: {{ .secretName }}
+      {{- end }}
+      {{- end }}
+
+      {{- if hasKey .Values.job.volumes "fromConfigMaps" }}
+      {{- range .Values.job.volumes.fromConfigMaps }}
+      - name: {{ .cmName }}
+        configMap:
+          name: {{ .cmName }}
+          {{- if .items }}
+          items:
+            {{- range .items }}
+            - key: {{ .key }}
+              path: {{ .path }}
+            {{- end }}
+          {{- end }}
+      {{- end }}
+      {{- end }}
+      
+      {{- if hasKey .Values.job.volumes "fromPvc" }}
+      {{- range .Values.job.volumes.fromPvc }}
+      - name: {{ .pvcName }}
+        persistentVolumeClaim:
+          claimName: {{ .pvcName }}
+      {{- end }}
+      {{- end }}
+
+      {{- if hasKey .Values.job.volumes "emptyDir"}}
+      {{- range .Values.job.volumes.emptyDir }}
+      - name: {{ .dirName }}
+        emptyDir:
+          sizeLimit: {{ .sizeLimit }}
+      {{- end }}
+      {{- end }}
+
+      {{- end }}
+      {{- if hasKey .Values.job "affinity" }}
+      {{- if or (.Values.job.affinity.podSelfAntiAffinity.enabled) (.Values.job.affinity.nodeAffinity.enabled)}}
+      affinity:
+        {{- if .Values.job.affinity.podSelfAntiAffinity.enabled }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchLabels:
+                app: {{ .Values.job.labels.app }}
+        {{- end }}
+        {{- if .Values.job.affinity.nodeAffinity.enabled }}
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.job.affinity.nodeAffinity.labelKey }}
+                operator: In
+                values:
+                - {{ .Values.job.affinity.nodeAffinity.labelValue }}
+        {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- if and (hasKey .Values.job "tolerations") (gt (len .Values.job.tolerations) 0) }}
+      tolerations:
+      {{- range .Values.job.tolerations }}
+        - effect: {{ .effect }}
+          key: {{ .key }}
+          operator: {{ .operator }}
+          {{- if .value }}
+          value: {{ .value }}
+          {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- if and (hasKey .Values.job "nodeSelector") ( .Values.job.nodeSelector) }}
+      nodeSelector: {{ toYaml .Values.job.nodeSelector | nindent 8 }}
+      {{- end }}
+      restartPolicy: {{ .Values.job.restartPolicy }}
+{{- end }}

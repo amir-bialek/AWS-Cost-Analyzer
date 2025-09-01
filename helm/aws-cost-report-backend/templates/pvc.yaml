@@ -1,0 +1,59 @@
+{{- if .Values.pvc.enabled }}
+{{- range .Values.pvc.default -}}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "{{ .name }}"
+spec:
+  accessModes:
+    {{- range .accessModes }}
+    - "{{ . }}"
+    {{- end }}
+  resources:
+    requests:
+      storage: {{ .storage }}
+  storageClassName: {{ .storageClassName }}
+  volumeMode: {{ .volumeMode }}
+---
+{{- end }}
+
+{{- range .Values.pvc.s3.volumes }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: s3-csi-{{ .name }}
+spec:
+  capacity:
+    storage: {{ .storage }}
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: {{ $.Values.pvc.s3.storageClassName | default "s3-csi" }}
+  mountOptions:
+    - prefix={{ .prefix }}/
+    - region={{ .region | default $.Values.pvc.s3.defaultRegion | default "us-east-2" }}
+    {{- range .mountExtraOptions }}
+    - {{ . }}
+    {{- end }}
+  csi:
+    driver: s3.csi.aws.com
+    volumeHandle: s3-csi-{{ .name }}
+    volumeAttributes:
+      bucketName: {{ .bucket }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .name }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .storage }}
+  volumeName: s3-csi-{{ .name }}
+  storageClassName: {{ $.Values.pvc.s3.storageClassName | default "s3-csi" }}
+{{- end }}
+{{- end }}

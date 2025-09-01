@@ -1,0 +1,923 @@
+# Deployment
+deployment:
+  ## @param .deployment.enabled
+  # -- Whether to create the deployment (Required).
+  enabled: false
+
+  ## @param .deployment.name
+  # -- Deployment name (Required).
+  name: ""
+
+  ## @param .deployment.labels
+  # -- Add labels to deployment (Optional).
+  labels: {} 
+    # app: example-name
+    # tier: app
+    # customer: bialek
+
+  ## @param .deployment.imagePullSecrets
+  # -- Use a secret that contains private Docker registry credentials (Optional).
+  imagePullSecrets: []
+    # - name: bialekg-credentials
+
+  ## @param .deployment.image
+  # -- Specify details of the deployment's image (Required).
+  image:
+    ## @param .deployment.image.dockerregistry
+    # -- The Docker registry URL (Required). Note: If the Docker registry is private, you might need to use imagePullSecrets.
+    dockerregistry: ""
+
+    ## @param .deployment.image.name
+    # -- The Docker image name (Required). Note: No need to add '/' at the beginning.
+    name: ""
+
+    ## @param .deployment.image.tag
+    # -- The Docker image tag (Required).
+    tag: ""
+
+    ## @param .deployment.image.pullPolicy
+    # -- Pull policy for pod restarts (Required).
+    pullPolicy: ""
+
+  # nameOverride: "example-name"
+  # fullnameOverride: "example-name"
+
+  ## @param .deployment.replicasCount
+  # -- The number of replicas the deployment will create (Optional). Note: Relevant only if autoscaling.enabled is false.
+  replicasCount: 1
+
+  ## @param .deployment.autoscaling
+  # -- Auto scaling with HPA (Required). Note: If enabled is true, replicasCount is not relevant. HPA will control the replicas.
+  autoscaling:
+    ## @param .deployment.autoscaling.enabled
+    # -- Enable auto scaling (Required).
+    enabled: false
+    ## @param .deployment.autoscaling.maxReplica
+    # -- Maximum number of replicas (Required).
+    maxReplica: 3
+    ## @param .deployment.autoscaling.minReplica
+    # -- Minimum number of replicas (Required).
+    minReplica: 1
+    ## @param .deployment.autoscaling.targetCPUUtilizationPercentage
+    # -- Target CPU utilization percentage (Required).
+    targetCPUUtilizationPercentage: 80
+    ## @param .deployment.autoscaling.targetMemoryUtilizationPercentage
+    # -- Target memory utilization percentage (Required). 
+    targetMemoryUtilizationPercentage: 80
+
+  ## @param .deployment.volumes
+  # -- Volume parameters for deployment (Required).
+  volumes:
+    ## @param .deployment.volumes.fromSecrets
+    # -- Volumes from secrets (Optional). Enables you to pull existing secrets into a volume.
+    fromSecrets: []
+      ## @param .deployment.volumes.fromSecrets[].secretName
+      # -- The secret name that should be used (Required).
+    # - secretName: jwt-public
+      ## @param .deployment.volumes.fromSecrets[].mountPath
+      # -- The path to mount the secret file (Required).
+      # mountPath: /opt/bialek/publicKey.pub
+      ## @param .deployment.volumes.fromSecrets[].subPath
+      # -- The actual name of the secret file (Required).
+      # subPath: publicKey.pub
+      ## @param .deployment.volumes.fromSecrets[].readOnly
+      # -- The access mode to the secret file, if false RW access enabled (Required).
+      # readOnly: true
+
+    ## @param .deployment.volumes.fromConfigMaps
+    # -- Volumes from ConfigMaps (Optional). Enables you to pull existing ConfigMaps into a volume.
+    fromConfigMaps: []
+      ## @param .deployment.volumes.fromConfigMaps[].cmName
+      # -- The ConfigMap name that should be used (Required).
+    # - cmName: config-volume
+      ## @param .deployment.volumes.fromConfigMaps[].mountPath
+      # -- The path to mount the ConfigMap file (Required).
+      # mountPath: /etc/config/keys
+      ## @param .deployment.volumes.fromConfigMaps[].subPath
+      # -- The actual name of the ConfigMap file (Optional).
+      # subPath: test.txt
+      ## @param .deployment.volumes.fromConfigMaps[].readOnly
+      # -- The access mode to the ConfigMap file, if false RW access enabled (Required).
+      # readOnly: true
+      ## @param .deployment.volumes.fromConfigMaps[].items
+      # -- Use the path field to specify the desired file path for specific ConfigMap items (Optional). Note: if specified .deployment.volumes.fromConfigMaps[].items you should NOT use '.deployment.volumes.fromConfigMaps[].subPath'.
+      # items:
+        ## @param .deployment.volumes.fromConfigMaps[].items[].key
+        # -- Specific key name inside the .data of the ConfigMap (Optional).
+      # - key: "SPECIAL_LEVEL"
+        ## @param .deployment.volumes.fromConfigMaps[].items[].path 
+        # -- Specific path to mount the specific key you choosen (Optional). Note: In this case, the SPECIAL_LEVEL item will be mounted in the config-volume volume at '/etc/config/keys'.
+        # path: "keys"
+
+    ## @param .deployment.volumes.fromPvc
+    # -- Volumes from Persistent Volume Claims (PVC) (Optional). Enables you to use existing PVCs.
+    fromPvc: []
+      ## @param .deployment.volumes.fromPvc[].pvcName
+      # -- The PVC name that should be used (Required).
+    # - pvcName: testPVC
+      ## @param .deployment.volumes.fromPvc[].pvcName
+      # -- The path to mount the PVC file (Required).
+      # mountPath: /example/test/
+
+    fromNFS: []
+      ## @param .deployment.volumes.fromNFS[].fromNFS
+      # -- The PVC name that should be used (Required).
+    - NFSName: testNFS
+      # -- The path of the NFS server (Required).
+      NFSPath: /example/test/
+      # -- The address of the NFS server.
+      NFSServer: nfs.server.address.ip
+      # -- The path to mount the NFS client (Required).
+      mountPath: /path/in/pod
+      readOnly: false
+
+
+
+    ## @param .deployment.volumes.emptyDir
+    # -- Enables you to create an empty directory inside the deployment's pod (Useful for temporary storage) (Optional). Note: All the content inside the empty directory will be delete incase of a pod deletion.
+    emptyDir: []
+      ## @param .deployment.volumes.emptyDir[].dirName
+      # -- The empty directory name that will be created inside deployment's pod (Required).
+    # - dirName: testEmptyDir
+      ## @param .deployment.volumes.emptyDir[].sizeLimit
+      # -- The empty directory size (Required).
+      # sizeLimit: 1Gi
+      ## @param .deployment.volumes.emptyDir[].mountPath
+      # -- The path to create the empty directory (Required).
+      # mountPath: /example/test/
+
+  ## @param .deployment.env
+  # -- Environment Variables parameters for deployment (Required).
+  env:
+    ## @param .deployment.env.fromSecrets
+    # -- Environment Variables from secrets (Optional). Enables you to create environment variables from existing secrets.
+    fromSecrets: []
+      ## @param .deployment.env.fromSecrets[].envName
+      # -- The environment variable name that will be created inside deployment's pod (Required).
+    # - envName: username
+      ## @param .deployment.env.fromSecrets[].secretName
+      # -- The name of the Secret that will be used to take values from (Required).
+      # secretName: creds
+      ## @param .deployment.env.fromSecrets[].secretKey
+      # -- The specific key name inside the Secret (Required).
+      # secretKey: user-name
+
+    ## @param .deployment.env.fromConfigMaps
+    ## Enables you to create environments variables from existing ConfigMaps.
+    ## Note: This will create Environment Variables with all the values inside the ConfigMap.
+    ## The number of the environment variables that will be created will be the same as .data length inside the ConfigMap, each env's name will be the key inside .data
+    # -- Environment Variables from ConfigMaps (Optional).
+    fromConfigMaps: []
+      ## @param .deployment.env.fromConfigMaps
+      # -- The name of the existing ConfigMap (Required).
+    # - cmName: cmAsEnv
+
+    ## @param .deployment.env.regular
+    # -- Create Environment Variables (Optional). Create environment variables manually using key-value pairs.
+    regular: {}
+      # SPRING_PROFILES_ACTIVE: prod
+      # JAVA_ARGS: -Xmx512m
+      # SERVICE_NAME: example-name
+      # LOG_PATH: /opt/bialek/logs
+      # SPRING_CLOUD_CONFIG_FAIL_FAST: true
+
+  ## @param .deployment.podAnnotations
+  # -- Add annotations directly to deployment's pod (Optional).
+  podAnnotations: {} 
+
+  ## @param .deployment.resources
+  # -- Resource requests and limits for deployment's pods (Required). Note: .deployment.resources.limits & .deployment.resources.requests are optional.
+  resources: {}
+    # limits:
+    #   cpu: 500m
+    #   memory: 500Mi
+    # requests:
+    #   cpu: 300m
+    #   memory: 200Mi
+
+  ## @param .deployment.podSecurityContext
+  # -- Deployment pod's security context (Required).
+  podSecurityContext: {}
+
+  ## @param .deployment.automountServiceAccount
+  # -- If you don't want the kubelet to automatically mount a ServiceAccount's API credentials, you can opt out of the default behavior. You can opt out of automounting API credentials on /var/run/secrets/kubernetes.io/serviceaccount/token for a service account by setting automountServiceAccountToken: false on the ServiceAccount, You can also opt out of automounting API credentials for a particular Pod:
+  # automountServiceAccount: false
+
+  ## @param .deployment.containerSecurityContext
+  # -- Security context for containers inside deployment's pod (Required).
+  containerSecurityContext: {} 
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+    # allowPrivilegeEscalation: false
+
+  ## @param .deployment.command
+  # -- List of commands that replace the default command defined in the container image's Dockerfile (Optional).
+  command: []
+  # - "myapp"
+
+  ## @param .deployment.args
+  ## It allows you to provide runtime parameters or options to the main command.
+  # -- Additional arguments to pass to the container's main command (Optional). Note: The args field does not replace the main command; it augments it.
+  args: []
+  # - "--port"
+  # - "8080"
+
+  ## @param .deployment.readiness
+  # -- Readiness parameters for deployment (Required).
+  readiness:
+    ## @param .deployment.readiness.includeReadinessProbe 
+    # -- If true will include readiness in the deployment based on the parameters specified on .deployment.readiness (Required).
+    includeReadinessProbe: false
+    ## @param .deployment.readiness.openContainerPort
+    # -- If true will open readiness port in the deployment's pod (Required). Note: the probe port number based on the parameter '.deployment.readiness.probePort'.
+    openContainerPort: false
+    ## @param .deployment.readiness.openServicePort
+    # -- If true will enable the creation of readiness port in the deployment's service based on the parameter '.deployment.readiness.probePort' (Required). Note: This field only enables the possibility to add probPort in a service. It depends on service's config values, if .service.enabled and .service.services[].enableProbePort enabled. 
+    openServicePort: false
+    ## @param .deployment.readiness.name
+    # -- The name of the port that will be created inside the container (Required).
+    name: readiness-port
+    ## @param .deployment.readiness.probePort
+    # -- The number of the port that will be created inside the container and the service(if enabled) (Required).
+    probePort: 8090
+    ## @param .deployment.readiness.protocol
+    # -- The protocol of the port that will be create inside the container and the service (Required).
+    protocol: TCP
+    ## @param .deployment.readiness.probePath
+    # -- The path to access on the HTTP server (Required).
+    probePath: /actuator/health
+    ## @param .deployment.readiness.httpHeaders
+    # -- Custom headers to set in the request. HTTP allows repeated headers (Optional).
+    httpHeaders: 
+      ## @param .deployment.readiness.httpHeaders[].name
+      # -- The name of a custom header (Optional).
+    - name: X-Tenant-Id
+      ## @param .deployment.readiness.httpHeaders[].value
+      # -- The value of a custom header (Optional).
+      value: app
+      ## @param .deployment.readiness.httpHeaders[].name
+      # -- The name of a custom header (Optional).
+    - name: X-Source-Id
+      ## @param .deployment.readiness.httpHeaders[].value
+      # -- The value of a custom header (Optional).
+      value: app
+    ## @param .deployment.readiness.scheme
+    # -- Scheme to use for connecting to the host (HTTP or HTTPS) (Required).
+    scheme: HTTP
+    ## @param .deployment.readiness.initialDelay
+    ## Note: If a startup probe is defined, liveness and readiness probe delays do not begin until the startup probe has succeeded. If the value of periodSeconds is greater than initialDelaySeconds then the initialDelaySeconds would be ignored. Defaults to 0 seconds. Minimum value is 0.
+    # -- Number of seconds after the container has started before startup, liveness or readiness probes are initiated (Required).
+    initialDelay: 45
+    ## @param .deployment.readiness.period
+    # -- How often (in seconds) to perform the probe. Default to 10 seconds. The minimum value is 1 (Required).
+    period: 15
+    ## @param .deployment.readiness.failureThreshold
+    # -- After a probe fails failureThreshold times in a row, Kubernetes considers that the overall check has failed: the container is not ready/healthy/live (Required).
+    failureThreshold: 5
+    ## @param .deployment.readiness.successThreshold
+    # -- Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup Probes. Minimum value is 1.
+    successThreshold: 1
+    ## @param .deployment.readiness.timeoutSeconds
+    # -- Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1 (Required).
+    timeout: 45
+
+  ## @param .deployment.liveness
+  # -- Liveness parameters for deployment (Required).
+  liveness:
+    ## @param .deployment.liveness.includeLivenessProbe
+    # -- If true will include liveness in the deployment based on the parameters specified on '.deployment.liveness' (Required).
+    includeLivenessProbe: false
+    ## @param .deployment.liveness.name
+    # -- The name of the port that will be created inside the container (Required).
+    name: liveness-port
+    ## @param .deployment.liveness.probePort
+    # -- The number of the port that will be created inside the container and the service(if enabled) (Required).
+    probePort: 8090
+    ## @param .deployment.liveness.protocol
+    # -- The protocol of the port that will be create inside the container and the service (Required).
+    protocol: TCP
+    ## @param .deployment.liveness.probePath (String, Required) - 
+    # -- The path to access on the HTTP server (Required).
+    probePath: /actuator/health
+    ## @param .deployment.liveness.httpHeaders
+    # -- Custom headers to set in the request. HTTP allows repeated headers (Optional).
+    httpHeaders:
+      ## @param .deployment.liveness.httpHeaders[].name
+      # -- The name of a custom header (Optional).
+    - name: X-Tenant-Id
+      ## @param .deployment.liveness.httpHeaders[].value
+      # -- The value of a custom header (Optional).
+      value: app
+      ## @param .deployment.liveness.httpHeaders[].name
+      # -- The name of a custom header (Optional).
+    - name: X-Source-Id
+      ## @param .deployment.liveness.httpHeaders[].value
+      # -- The value of a custom header (Optional).
+      value: app
+    ## @param .deployment.liveness.scheme
+    # -- Scheme to use for connecting to the host (HTTP or HTTPS) (Required).
+    scheme: HTTP
+    ## @param .deployment.liveness.initialDelay
+    ## Note: If a startup probe is defined, liveness and readiness probe delays do not begin until the startup probe has succeeded. If the value of periodSeconds is greater than initialDelaySeconds then the initialDelaySeconds would be ignored. Defaults to 0 seconds. Minimum value is 0.
+    # -- Number of seconds after the container has started before startup, liveness or readiness probes are initiated (Required).
+    initialDelay: 300
+    ## @param .deployment.liveness.period
+    # -- How often (in seconds) to perform the probe. Default to 10 seconds. The minimum value is 1 (Required).
+    period: 15
+    ## @param .deployment.liveness.failureThreshold
+    # -- After a probe fails failureThreshold times in a row, Kubernetes considers that the overall check has failed: the container is not ready/healthy/live (Required).
+    failureThreshold: 5
+    ## @param .deployment.liveness.successThreshold
+    # -- Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup Probes. Minimum value is 1.
+    successThreshold: 1
+    ## @param .deployment.liveness.timeoutSeconds
+    # -- Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1 (Required).
+    timeout: 45
+
+  ## @param .deployment.nodeSelector
+  # -- Add node labels to schedule deployment on specific nodes (Optional).
+  nodeSelector: {}
+
+  ## @param .deployment.tolerations
+  # -- Add tolerations to schedule deployment on specific nodes (Optional).
+  tolerations: []
+    ## @param .deployment.tolerations[].key
+    # -- The key of the taint (Required).
+  # - key: "some-model"
+    ## @param .deployment.tolerations[].operator
+    # -- The operator of the taint (Required).
+    # operator: "Exists"
+    ## @param .deployment.tolerations[].effect 
+    # -- The effect of the taint (Required).
+    # effect: "NoSchedule"
+    ## @param .deployment.tolerations[].value
+    # -- The value of the taint (Optional). Note: When operator "Exists" is defined you should not define .deployment.tolerations[].value value, therefore it is optional.
+    # value: 
+
+  ## @param .deployment.affinity
+  # -- Affinity parameters for scheduling the deployment (Optional).
+  affinity:
+    ## @param .deployment.affinity.podSelfAntiAffinity
+    # -- Enables you to prevent pods with specific labels or attributes from running together on the same node to enhance resilience and availability (Required).
+    podSelfAntiAffinity:
+      enabled: true
+    ## @param .deployment.affinity.podSelfAntiAffinity
+    # -- Schedule deployment's pod only on a specific node (Required).
+    nodeAffinity:
+      enabled: false
+      ## @param .deployment.affinity.podSelfAntiAffinity.labelKey
+      # -- Add node's label key (Required).
+      labelKey: nodeGroup
+      ## @param .deployment.affinity.podSelfAntiAffinity.labelValue
+      # -- Add node's label value (Required).
+      labelValue: basic
+
+  ## @param .deployment.revisionHistoryLimit
+  ## Helps manage storage and revision history.
+  # -- Determines how many historical versions of a workload's configuration are retained in the cluster (Required).
+  revisionHistoryLimit: 3
+
+# Services List
+service:
+  ## @param .service.enabled
+  # -- Whether to enable the creation of services (Required).
+  enabled: false
+
+  ## @param .service.enabled.services
+  # -- List of services (Required).
+  services:
+    ## @param .service.services[].name
+    # -- Name of a service to create (Required).
+  - name: ""
+    ## @param .service.services[].annotations
+    # -- Add annotations to the Service (Optional).
+    annotations: {}
+    ## @param .service.services[].labels
+    # -- Add labels to the Service (Optional).
+    labels: {}
+    ## @param .service.services[].type
+    # -- The Service type (Required).
+    type: ClusterIP
+    ## @param .service.services[].enableProbePort
+    # -- Open readiness probePort using the port specified in .deployment.readiness.probePort (Required). Note: Will apply only if these values are true - .service.services[].type, .deployment.enabled, .deployment.readiness.openServicePort
+    enableProbePort: true
+    ## @param .service.services[].ports
+    # -- Ports list to open in the Service (Required).
+    ports: 
+      ## @param .service.services[].name
+      # -- Name of port in the Service (Required).
+    - name: service-port
+      ## @param .service.services[].protocol
+      # -- Protocol of port in the Service (Required).
+      protocol: TCP
+      ## @param .service.services[].port
+      # -- Port number in the Service (Required).
+      port: 8065
+      ## @param .service.services[].targetPort
+      # -- Target port number in the Service (Required).
+      targetPort: 8065
+    ## @param .service.services[].selectDeployment
+    # -- Connect service to deployment (Optional). Note: Will use .deployment.labels in the selector field in the Service, will apply only if .service.services[].selectDeployment, .deployment.enabled are true
+    selectDeployment: true
+    ## @param .service.services[].selectDeployment
+    ## -- Add labels of a pod (Optional). Note: Will not apply if .service.services[].selectDeployment, .deployment.enabled are true
+    selector: {}
+  ## e.g NodePort:
+  # - name: example-NodePort
+  #   annotations:
+  #     some: annotation
+  #   labels: 
+  #     example: example
+  #   type: NodePort
+  #   enableProbePort: true
+  #   ports: 
+  #   - name: service-port
+  #     protocol: TCP
+  #     port: 8065
+  #     targetPort: 8065
+  #     nodePort: 30007
+  #   selectDeployment: false
+  #   selector:
+  #     app: some-app
+
+# Service Account
+serviceAccount:
+  ## @param .serviceAccount.enabled
+  # -- Whether to create the serviceAccount (Required).
+  enabled: false
+  ## @param .serviceAccount.annotations
+  # -- Add annotations to serviceAccount (Required).
+  annotations: {}
+  ## @param .serviceAccount.name
+  # -- ServiceAccount name (Required).
+  name: ""
+  ## @param .serviceAccount.automountServiceAccount
+  # -- If you don't want the kubelet to automatically mount a ServiceAccount's API credentials, you can opt out of the default behavior. You can opt out of automounting API credentials on /var/run/secrets/kubernetes.io/serviceaccount/token for a service account by setting automountServiceAccountToken: false on the ServiceAccount
+  # automountServiceAccount: false
+
+# Config Maps
+configMaps:
+  ## @param .configMaps.enabled
+  # -- Whether to enable the creation of configMaps (Required).
+  enabled: false
+  ## @param .configMaps.enabled.cms
+  # -- List of configMaps (Required).
+  cms: []
+    ## @param .configMaps.enabled.cms[].name
+    # -- Name of configMap to create (Required).
+  # - name: ""
+    ## @param .configMaps.enabled.cms[].data
+    # -- Data for the configMap (Required).
+    # data:
+      # SPECIAL_LEVEL: very1
+      # SPECIAL_TYPE: charm1
+  ## e.g data with multiple lines"
+  # - name: example2
+  #   data:
+  #     nginx.conf: |
+  #       You can write
+  #       Here anything
+  #       You want.
+
+# Secrets
+secrets:
+  ## @param .secrets.enabled
+  # -- Whether to enable the creation of secrets (Required).
+  enabled: false
+  ## @param .configMaps.secrets.secrets
+  # -- List of secrets (Required).
+  secrets: 
+    ## @param .configMaps.secrets.secrets[].name
+    # -- Name of a Secret to create (Required).
+  # - name: ""
+    ## @param .configMaps.secrets.secrets[].type
+    # -- Type of a Secret to create (Required).
+    # type: Opaque
+    ## @param .configMaps.secrets.secrets[].data
+    # -- Data for the Secret (Required).
+    # data:
+      # example1: SGVsbG8gV29ybGQxCg==
+      # example2: SGVsbG8gV29ybGQyCg==
+  ## e.g Secret with type tls:
+  # - name: example2
+  #   type: kubernetes.io/tls
+  #   data:
+  #     example3: SGVsbG8gV29ybGQzCg==
+  #     example4: SGVsbG8gV29ybGQ0Cg==
+
+# StorageClass
+storageClass:
+  ## @param .storageClass.enabled
+  # -- Whether to create the StorageClass (Required).
+  enabled: false
+  ## @param .storageClass.name
+  # -- Name of StorageClass to create (Required).
+  name: ""
+  ## @param .storageClass.provisioner
+  # -- provisioner of StorageClass (Required).
+  provisioner: file.csi.azure.com
+  ## @param .storageClass.skuName
+  # -- skuName of StorageClass (Required).
+  skuName: Standard_LRS
+  ## @param .storageClass.allowVolumeExpansion
+  # -- allowVolumeExpansion of StorageClass (Required).
+  allowVolumeExpansion: true
+  ## @param .storageClass.reclaimPolicy
+  # -- reclaimPolicy of StorageClass (Required).
+  reclaimPolicy: Delete
+  ## @param .storageClass.volumeBindingMode
+  # -- volumeBindingMode of StorageClass (Required).
+  volumeBindingMode: Immediate
+  ## @param .storageClass.mountOptions
+  # -- mountOptions of StorageClass (Required).
+  mountOptions: []
+    # - dir_mode=0777
+    # - file_mode=0777
+    # - uid=0
+    # - gid=0
+    # - mfsymlinks
+    # - cache=strict # https://linux.die.net/man/8/mount.cifs
+    # - nosharesock
+
+# PersistentVolumeClaim
+pvc:
+  ## @param .pvc.enabled
+  # -- Whether to create the Persistent Volume Claim (PVC) (Required).
+  enabled: false
+  pvc:
+    - name: ""
+    ## @param .pvc.accessModes
+    # -- accessModes of PVC (Required).
+      accessModes: []
+      # - ReadWriteMany
+      ## @param .pvc.storage
+      # -- Storage size of PVC (Required).
+      storage: 2Gi
+      ## @param .pvc.volumeMode
+      # -- volumeMode of PVC (Required).
+      volumeMode: Filesystem
+      ## @param .pvc.storageClassName
+      # -- storageClassName of PVC (Required).
+      storageClassName: default
+
+# Ingress
+ingress:
+  ## @param .ingress.enabled
+  # -- Whether to enable the creation of ingresses (Required).
+  enabled: false
+  ## @param .ingress.enabled
+  # -- List of Ingresses (Required).
+  ingresses:
+    ## @param .ingress.ingresses[].name
+    # -- Name of Ingress (Required).
+  - name: ""
+    ## @param .ingress.ingresses[].ingressClassName
+    # -- ingressClassName of Ingress (Required).
+    ingressClassName: 
+    ## @param .ingress.ingresses[].annotations
+    # -- Add annotations to Ingress (Required).
+    annotations: {}
+    ## @param .ingress.ingresses[].labels
+    # -- Add labels to Ingress (Optional).
+    labels: {}
+    ## @param .ingress.ingresses[].hosts
+    # -- List of hosts and paths options inside an Ingress (Required)
+    hosts:
+    ## @param .ingress.ingresses[].hosts[].host
+    # -- Domain name the Ingress will use (Optional)
+    # - host: example.domain.com
+    #   paths:
+    #     - path: /
+    #       pathType: Prefix
+    #       backend:
+    #         service:
+    #           name: example
+    #           port:
+    #             number: 8080
+    #     - path: /path2
+    #       pathType: Prefix
+    #       backend:
+    #         service:
+    #           name: example123
+    #           port:
+    #             number: 8123
+    ## @param .ingress.ingresses[].hosts[].paths
+    # -- Paths to Ingress (without domain name) (Optional)
+    # - paths:
+    #     - path: /noHost
+    #       pathType: Prefix
+    #       backend:
+    #         service:
+    #           name: example
+    #           port:
+    #             name: withoutHost
+    ## @param .ingress.ingresses[].tls
+    # -- List of tls (Optional). Use TLS for the ingress to get HTTPS.
+    tls: []
+    ## @param .ingress.ingresses[].tls[].secretName
+    # -- Secret name that contains the TLS certificates.
+    # - secretName: example-general-tls
+      ## @param .ingress.ingresses[].tls[].hosts
+      # -- List of domain names to use TLS HTTPS.
+      # hosts:
+      # - example.domain.com
+
+
+# NetworkPolicy
+networkpolicy:
+  ## @param .networkpolicy.enabled.
+  # -- Whether to enable the creation of networkpolicy (Required).
+  enabled: false
+  ## @param .networkpolicy.name.
+  # -- Name of NetworkPolicy (Required).
+  name: ""
+  ## @param .networkpolicy.annotations
+  # -- Add annotations to NetworkPolicy (Required).
+  annotations: {}
+  ## @param .networkpolicy.labels.
+  # -- Add labels to NetworkPolicy (Optional).
+  labels: {}
+  ## @param .networkpolicy.selectDeployment.
+  # -- Connect networkpolicy to deployment (Optional). Note: Will use .deployment.labels in the selector field in the NetworkPolicy, will apply only if .networkpolicy.selectDeployment, .deployment.enabled are true
+  selectDeployment: true
+  ## @param .networkpolicy.selector.
+  # -- Add labels of a pod (Optional). Note: Will not apply if .networkpolicy.selectDeployment, .deployment.enabled are true
+  selector: {}
+  ## @param .networkpolicy.policyTypes.
+  # -- NetworkPolicy policy types (Required) ("Ingress"/"Egress").
+  policyTypes: []
+  # - Ingress 
+  # - Egress
+  ## @param .networkpolicy.ingress
+  # -- NetworkPolicy ingress list.
+  ingress:
+    # - from:
+    #     - ipBlock:
+    #         cidr: 172.17.0.0/16
+    #         except:
+    #           - 172.17.1.0/24
+    #     - namespaceSelector:
+    #         matchLabels:
+    #           project: myproject
+    #     - podSelector:
+    #         matchLabels:
+    #           role: frontend
+    #   ports:
+    #     - protocol: TCP
+    #       port: 6379
+
+    # - from:
+    #     - podSelector:
+    #         matchLabels:
+    #           role: be
+    #     - podSelector:
+    #         matchLabels:
+    #           role: db
+    #   ports:
+    #     - protocol: TCP
+    #       port: 8080
+    #     - protocol: TCP
+    #       port: 5826
+  ## @param .networkpolicy.egress
+  # -- NetworkPolicy egress list.
+  egress:
+    # - to:
+    #     - ipBlock:
+    #         cidr: 10.0.0.0/24
+    #   ports:
+    #     - protocol: TCP
+    #       port: 5978
+
+
+# Job
+job:
+  ## @param .job.enabled
+  # -- Whether to create the job (Required).
+  enabled: false
+
+  ## @param .job.name
+  # -- job name (Required).
+  name: ""
+
+  ## @param .job.labels
+  # -- Add labels to job (Optional).
+  labels: {}
+    # app: example-name
+    # tier: app
+    # customer: bialek
+
+  ## @param .job.imagePullSecrets
+  # -- Use a secret that contains private Docker registry credentials (Optional).
+  imagePullSecrets: []
+    # - name: bialekg-credentials
+
+  ## @param .job.image
+  # -- Specify details of the job's image (Required).
+  image:
+    ## @param .job.image.dockerregistry
+    # -- The Docker registry URL (Required). Note: If the Docker registry is private, you might need to use imagePullSecrets.
+    dockerregistry: ""
+
+    ## @param .job.image.name
+    # -- The Docker image name (Required). Note: No need to add '/' at the beginning.
+    name: ""
+
+    ## @param .job.image.tag
+    # -- The Docker image tag (Required).
+    tag: ""
+
+    ## @param .job.image.pullPolicy
+    # -- Pull policy for pod restarts (Required).
+    pullPolicy: ""
+
+  ## @param .job.volumes
+  # -- Volume parameters for job (Required).
+  volumes:
+    ## @param .job.volumes.fromSecrets
+    # -- Volumes from secrets (Optional). Enables you to pull existing secrets into a volume.
+    fromSecrets: []
+      ## @param .job.volumes.fromSecrets[].secretName
+      # -- The secret name that should be used (Required).
+    # - secretName: jwt-public
+      ## @param .job.volumes.fromSecrets[].mountPath
+      # -- The path to mount the secret file (Required).
+      # mountPath: /opt/bialek/publicKey.pub
+      ## @param .job.volumes.fromSecrets[].subPath
+      # -- The actual name of the secret file (Required).
+      # subPath: publicKey.pub
+      ## @param .job.volumes.fromSecrets[].readOnly
+      # -- The access mode to the secret file, if false RW access enabled (Required).
+      # readOnly: true
+
+    ## @param .job.volumes.fromConfigMaps
+    # -- Volumes from ConfigMaps (Optional). Enables you to pull existing ConfigMaps into a volume.
+    fromConfigMaps: []
+      ## @param .job.volumes.fromConfigMaps[].cmName
+      # -- The ConfigMap name that should be used (Required).
+    # - cmName: config-volume
+      ## @param .job.volumes.fromConfigMaps[].mountPath
+      # -- The path to mount the ConfigMap file (Required).
+      # mountPath: /etc/config/keys
+      ## @param .job.volumes.fromConfigMaps[].subPath
+      # -- The actual name of the ConfigMap file (Optional).
+      # subPath: test.txt
+      ## @param .job.volumes.fromConfigMaps[].readOnly
+      # -- The access mode to the ConfigMap file, if false RW access enabled (Required).
+      # readOnly: true
+      ## @param .job.volumes.fromConfigMaps[].items
+      # -- Use the path field to specify the desired file path for specific ConfigMap items (Optional). Note: if specified .job.volumes.fromConfigMaps[].items you should NOT use '.job.volumes.fromConfigMaps[].subPath'.
+      # items:
+        ## @param .job.volumes.fromConfigMaps[].items[].key
+        # -- Specific key name inside the .data of the ConfigMap (Optional).
+      # - key: "SPECIAL_LEVEL"
+        ## @param .job.volumes.fromConfigMaps[].items[].path 
+        # -- Specific path to mount the specific key you choosen (Optional). Note: In this case, the SPECIAL_LEVEL item will be mounted in the config-volume volume at '/etc/config/keys'.
+        # path: "keys"
+
+    ## @param .job.volumes.fromPvc
+    # -- Volumes from Persistent Volume Claims (PVC) (Optional). Enables you to use existing PVCs.
+    fromPvc: []
+      ## @param .job.volumes.fromPvc[].pvcName
+      # -- The PVC name that should be used (Required).
+    # - pvcName: testPVC
+      ## @param .job.volumes.fromPvc[].pvcName
+      # -- The path to mount the PVC file (Required).
+      # mountPath: /example/test/
+
+    ## @param .job.volumes.emptyDir
+    # -- Enables you to create an empty directory inside the job's pod (Useful for temporary storage) (Optional). Note: All the content inside the empty directory will be delete incase of a pod deletion.
+    emptyDir: []
+      ## @param .job.volumes.emptyDir[].dirName
+      # -- The empty directory name that will be created inside job's pod (Required).
+    # - dirName: testEmptyDir
+      ## @param .job.volumes.emptyDir[].sizeLimit
+      # -- The empty directory size (Required).
+      # sizeLimit: 1Gi
+      ## @param .job.volumes.emptyDir[].mountPath
+      # -- The path to create the empty directory (Required).
+      # mountPath: /example/test/
+
+  ## @param .job.env
+  # -- Environment Variables parameters for job (Required).
+  env:
+    ## @param .job.env.fromSecrets
+    # -- Environment Variables from secrets (Optional). Enables you to create environment variables from existing secrets.
+    fromSecrets: []
+      ## @param .job.env.fromSecrets[].envName
+      # -- The environment variable name that will be created inside job's pod (Required).
+    # - envName: username
+      ## @param .job.env.fromSecrets[].secretName
+      # -- The name of the Secret that will be used to take values from (Required).
+      # secretName: creds
+      ## @param .job.env.fromSecrets[].secretKey
+      # -- The specific key name inside the Secret (Required).
+      # secretKey: user-name
+
+    ## @param .job.env.fromConfigMaps
+    ## Enables you to create environments variables from existing ConfigMaps.
+    ## Note: This will create Environment Variables with all the values inside the ConfigMap.
+    ## The number of the environment variables that will be created will be the same as .data length inside the ConfigMap, each env's name will be the key inside .data
+    # -- Environment Variables from ConfigMaps (Optional).
+    fromConfigMaps: []
+      ## @param .job.env.fromConfigMaps
+      # -- The name of the existing ConfigMap (Required).
+    # - cmName: cmAsEnv
+
+    ## @param .job.env.regular
+    # -- Create Environment Variables (Optional). Create environment variables manually using key-value pairs.
+    regular: {}
+      # SPRING_PROFILES_ACTIVE: prod
+      # JAVA_ARGS: -Xmx512m
+      # SERVICE_NAME: example-name
+      # LOG_PATH: /opt/bialek/logs
+      # SPRING_CLOUD_CONFIG_FAIL_FAST: true
+
+  ## @param .job.podAnnotations
+  # -- Add annotations directly to job's pod (Optional).
+  podAnnotations: {} 
+
+  ## @param .job.resources
+  # -- Resource requests and limits for job's pods (Required). Note: .job.resources.limits & .job.resources.requests are optional.
+  resources: {}
+    # limits:
+    #   cpu: 500m
+    #   memory: 500Mi
+    # requests:
+    #   cpu: 300m
+    #   memory: 200Mi
+
+  ## @param .job.podSecurityContext
+  # -- job pod's security context (Required).
+  podSecurityContext: {}
+
+  ## @param .job.containerSecurityContext
+  # -- Security context for containers inside job's pod (Required).
+  containerSecurityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+    # allowPrivilegeEscalation: false
+
+  ## @param .job.command
+  # -- List of commands that replace the default command defined in the container image's Dockerfile (Optional).
+  command: []
+  # - "myapp"
+
+  ## @param .job.args
+  ## It allows you to provide runtime parameters or options to the main command.
+  # -- Additional arguments to pass to the container's main command (Optional). Note: The args field does not replace the main command; it augments it.
+  args: []
+  # - "--port"
+  # - "8080"
+
+  ## @param .job.nodeSelector
+  # -- Add node labels to schedule job on specific nodes (Optional).
+  nodeSelector: {}
+
+  ## @param .job.tolerations
+  # -- Add tolerations to schedule job on specific nodes (Optional).
+  tolerations: []
+    ## @param .job.tolerations[].key
+    # -- The key of the taint (Required).
+  # - key: "some-model"
+    ## @param .job.tolerations[].operator
+    # -- The operator of the taint (Required).
+    # operator: "Exists"
+    ## @param .job.tolerations[].effect 
+    # -- The effect of the taint (Required).
+    # effect: "NoSchedule"
+    ## @param .job.tolerations[].value
+    # -- The value of the taint (Optional). Note: When operator "Exists" is defined you should not define .job.tolerations[].value value, therefore it is optional.
+    # value: 
+
+  ## @param .job.affinity
+  # -- Affinity parameters for scheduling the job (Optional).
+  affinity:
+    ## @param .job.affinity.podSelfAntiAffinity
+    # -- Enables you to prevent pods with specific labels or attributes from running together on the same node to enhance resilience and availability (Required).
+    podSelfAntiAffinity:
+      enabled: true
+    ## @param .job.affinity.podSelfAntiAffinity
+    # -- Schedule job's pod only on a specific node (Required).
+    nodeAffinity:
+      enabled: false
+      ## @param .job.affinity.podSelfAntiAffinity.labelKey
+      # -- Add node's label key (Required).
+      labelKey: nodeGroup
+      ## @param .job.affinity.podSelfAntiAffinity.labelValue
+      # -- Add node's label value (Required).
+      labelValue: basic
+  ## @param .job.restartPolicy
+  # -- Job restartPolicy, valid values: "OnFailure", "Never". (Required).
+  restartPolicy: Never
+
+  ## @param .job.backoffLimit
+  # -- Job backoffLimit, valid values: Integer. (Optinal)
+  backoffLimit: 2

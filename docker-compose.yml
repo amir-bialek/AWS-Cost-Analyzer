@@ -1,0 +1,20 @@
+services:
+  backend:
+    build: ./backend
+    container_name: cur_analyzer_backend
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_COMPANY_NAME: "Bialek Company"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      COMPANY_NAME: "Bialek Company DOCKER COMPOSE"
+      BACKEND_API_URL: "http://backend:8000"
+    container_name: cur_analyzer_frontend
+    restart: unless-stopped

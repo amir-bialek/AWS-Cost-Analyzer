@@ -1,0 +1,107 @@
+# Deployment
+deployment:
+  enabled: true
+  command: []
+  args: []
+  name: aws-cost-report-backend
+  labels: 
+    app: aws-cost-report-backend
+  image:
+    name: bialekamir/aws-cost-report
+    tag: backend-v1.0.1
+    pullPolicy: "IfNotPresent"
+  imagePullSecrets: []
+  nameOverride: "aws-cost-report-backend"
+  fullnameOverride: "aws-cost-report-backend"
+  replicasCount: 1
+  autoscaling:
+    enabled: false
+  volumes:
+    fromSecrets: []
+    fromConfigMaps: []
+    fromPvc:
+    - pvcName: aws-cost-report-storage
+      mountPath: /app/storage/uploads
+    fromNFS: []
+    emptyDir: []
+  env:
+    fromSecrets: []
+    regular: []
+    fromConfigMaps: []
+  podAnnotations: {}
+  resources: 
+    limits:
+      cpu: 1000m
+      memory: 1000Mi
+    requests:
+      cpu: 50m
+      memory: 50Mi
+
+  podSecurityContext: {}
+  containerSecurityContext: {} 
+  readiness:
+    openContainerPort: false
+    openServicePort: false
+    includeReadinessProbe: false
+  liveness:
+    includeLivenessProbe: false
+  nodeSelector: []
+  tolerations: []
+  affinity:
+    podSelfAntiAffinity:
+      enabled: false
+    nodeAffinity:
+      enabled: false
+  revisionHistoryLimit: 3
+
+service:
+  enabled: true
+  services:
+  - name: "aws-cost-report-backend"
+    annotations: {}
+    labels: {}    
+    enableProbePort: true
+    type: ClusterIP
+    ports: 
+    - name: service-port
+      protocol: TCP
+      port: 8000
+      targetPort: 8000
+    selectDeployment: true
+    selector: {}
+
+networkpolicy:
+  enabled: false
+
+serviceAccount:
+  enabled: true
+  name: aws-cost-report-backend
+
+configMaps:
+  enabled: false
+
+secrets:
+  enabled: false
+
+storageClass:
+  enabled: false
+
+pvc:
+  enabled: true
+  default: []
+  s3:
+    storageClassName: s3-csi
+    defaultRegion: us-east-2
+    volumes:
+    - name: aws-cost-report-storage
+      bucket: devops-cost-data
+      prefix: eks-ui
+      storage: 10Gi
+
+ingress:
+  enabled: false
+
+job:
+  enabled: false
+
+

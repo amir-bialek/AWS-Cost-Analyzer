@@ -1,0 +1,119 @@
+# Deployment
+deployment:
+  enabled: true
+  command: []
+  args: []
+  name: aws-cost-report-frontend
+  labels: 
+    app: aws-cost-report-frontend
+  image:
+    name: bialekamir/aws-cost-report
+    tag: frontend-v1.0.1
+    pullPolicy: "IfNotPresent"
+  nameOverride: "aws-cost-report-frontend"
+  fullnameOverride: "aws-cost-report-frontend"
+  replicasCount: 1
+  autoscaling:
+    enabled: false
+  volumes:
+    fromSecrets: []
+    fromConfigMaps: []
+    fromPvc: []
+    fromNFS: []
+    emptyDir: []
+  env:
+    fromSecrets: []
+    regular:
+      COMPANY_NAME: "Helm Bialek Company"
+      BACKEND_API_URL: "http://aws-cost-report-backend:8000"
+    fromConfigMaps: []
+  podAnnotations: {}
+  resources: 
+    limits:
+      cpu: 1000m
+      memory: 1000Mi
+    requests:
+      cpu: 50m
+      memory: 50Mi
+
+  podSecurityContext: {}
+  containerSecurityContext: {} 
+  readiness:
+    openContainerPort: false
+    openServicePort: false
+    includeReadinessProbe: false
+  liveness:
+    includeLivenessProbe: false
+  nodeSelector: []
+  tolerations: []
+  affinity:
+    podSelfAntiAffinity:
+      enabled: false
+    nodeAffinity:
+      enabled: false
+  revisionHistoryLimit: 3
+
+service:
+  enabled: true
+  services:
+  - name: "aws-cost-report-frontend"
+    annotations: {}
+    labels: {}    
+    enableProbePort: true
+    type: ClusterIP
+    ports: 
+    - name: service-port
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
+    selectDeployment: true
+    selector: {}
+
+networkpolicy:
+  enabled: false
+
+serviceAccount:
+  enabled: false
+
+configMaps:
+  enabled: false
+
+secrets:
+  enabled: false
+
+storageClass:
+  enabled: false
+
+pvc:
+  enabled: false
+  s3:
+    volumes: []
+
+ingress:
+  enabled: true
+  ingresses:
+  - name: "aws-cost-report-ingress"
+    ingressClassName: nginx
+    annotations: 
+      cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    labels: {}
+    hosts:
+    - host: eks-cost.mywebsite.com
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: aws-cost-report-frontend
+              port:
+                number: 3000
+
+    tls: 
+    - secretName: aws-cost-report
+      hosts:
+      - eks-cost.mywebsite.com
+
+job:
+  enabled: false
+
+

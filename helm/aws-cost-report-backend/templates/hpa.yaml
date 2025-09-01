@@ -1,0 +1,42 @@
+{{- if .Values.deployment.enabled }}
+{{- if .Values.deployment.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  {{- if .Values.deployment.labels.kind }}
+  name: "{{ .Values.deployment.name }}-{{ .Values.deployment.labels.kind }}"
+  {{- else }}
+  name: "{{ .Values.deployment.name }}"
+  {{- end }}
+  labels: {{ toYaml .Values.deployment.labels | nindent 4 }}
+
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    {{- if .Values.deployment.labels.kind }}
+    name: "{{ .Values.deployment.name }}-{{ .Values.deployment.labels.kind }}"
+    {{- else }}
+    name: "{{ .Values.deployment.name }}"
+    {{- end }}
+  minReplicas: {{ .Values.deployment.autoscaling.minReplica }}
+  maxReplicas: {{ .Values.deployment.autoscaling.maxReplica }}
+  metrics:
+    {{- if .Values.deployment.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.deployment.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.deployment.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.deployment.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }} 
+{{- end }}

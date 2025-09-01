@@ -1,0 +1,35 @@
+{{- if .Values.networkpolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Values.networkpolicy.name }}
+  {{- with .Values.networkpolicy.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.networkpolicy.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  podSelector:
+    {{- if and (hasKey .Values.networkpolicy "selectDeployment") (.Values.networkpolicy.selectDeployment) (.Values.deployment.enabled) }}
+    matchLabels: {{ toYaml .Values.deployment.labels | nindent 8 }}
+    {{- else if and (hasKey .Values.networkpolicy "selector") }}
+    matchLabels: {{ toYaml .Values.networkpolicy.selector | nindent 8 }}
+    {{- end }}
+
+  policyTypes:
+  {{- range .Values.networkpolicy.policyTypes }}
+    - {{ . }}
+  {{- end }}
+
+  {{- if and (hasKey .Values.networkpolicy "ingress") (gt (len .Values.networkpolicy.ingress) 0) }}
+  ingress: {{ toYaml .Values.networkpolicy.ingress | nindent 4 }}
+  {{- end }}
+
+  {{- if and (hasKey .Values.networkpolicy "egress") (gt (len .Values.networkpolicy.egress) 0) }}
+  egress: {{ toYaml .Values.networkpolicy.egress | nindent 4 }}
+  {{- end }}
+
+{{- end }}

@@ -1,0 +1,57 @@
+{{- $top := .Values }}
+{{- if .Values.service.enabled }}
+{{- range .Values.service.services -}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  {{- if and ($top.deployment.enabled) (hasKey $top.deployment.labels "kind") ($top.deployment.labels.kind) }}
+  name: "{{ .name }}-{{ $top.deployment.labels.kind }}"
+  {{- else }}
+  name: "{{ .name }}"
+  {{- end }}
+  
+  {{- if and (hasKey . "annotations" ) }}
+  annotations: {{ toYaml .annotations | nindent 4 }}
+  {{- end }}
+
+  {{- if and ($top.deployment.enabled) (hasKey . "selectDeployment") (.selectDeployment) ($top.deployment.enabled) }}
+  labels: {{ toYaml $top.deployment.labels | nindent 4 }}
+  {{- else if and (hasKey . "labels") }}
+  labels: {{ toYaml .labels | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .type }}
+
+  ports:  
+  {{- $type := .type }}
+  {{- range $port := .ports }}
+    - name: {{ $port.name }}
+      port: {{ $port.port }}
+      {{- if $port.targetPort }}
+      targetPort: {{ $port.targetPort }}
+      {{- else }}
+      targetPort: {{ $port.port }}
+      {{- end }}
+      {{- if $port.protocol }}
+      protocol: {{ $port.protocol }}
+      {{- end }}
+      {{- if and (eq $type "NodePort") (hasKey $port "nodePort" ) ($port.nodePort) }}
+      nodePort: {{ $port.nodePort }}
+      {{- end }}
+  {{- end }}
+  {{- if and ( .enableProbePort ) (hasKey $top.deployment "readiness") (hasKey $top.deployment.readiness "openServicePort") ($top.deployment.readiness.openServicePort) }}
+    - name: readiness-port
+      port: {{ $top.deployment.readiness.probePort }}
+      targetPort: {{ $top.deployment.readiness.probePort }}
+      protocol: {{ $top.deployment.readiness.protocol }}
+  {{- end }}
+  
+  {{- if and (hasKey . "selectDeployment") (.selectDeployment) ($top.deployment.enabled) }}
+  selector: {{ toYaml $top.deployment.labels | nindent 4 }}
+  {{- else if and (hasKey . "selector") }}
+  selector: {{ toYaml .selector | nindent 4 }}
+  {{- end }}
+---
+{{- end }}
+{{- end }}

@@ -1,0 +1,324 @@
+{{- if .Values.deployment.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  {{- if .Values.deployment.labels.kind }}
+  name: "{{ .Values.deployment.name }}-{{ .Values.deployment.labels.kind }}"
+  {{- else }}
+  name: "{{ .Values.deployment.name }}"
+  {{- end }}
+  labels: {{ toYaml .Values.deployment.labels | nindent 4 }}
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit }}
+  {{- if not .Values.deployment.autoscaling.enabled }}
+  replicas: {{ .Values.deployment.replicasCount }}
+  {{- end }}
+  selector:
+    matchLabels: {{ toYaml .Values.deployment.labels | nindent 6 }}
+
+  template:
+    metadata:
+      labels: {{ toYaml .Values.deployment.labels | nindent 8 }}
+
+      {{- with .Values.deployment.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+    spec:
+
+
+      {{- range .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+      - name: {{ .name }}
+      {{- end }}
+
+      {{- if and (hasKey .Values "serviceAccount") (eq .Values.serviceAccount.enabled true) }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- end }}
+
+      {{- if hasKey .Values.deployment "automountServiceAccount" }}
+      automountServiceAccountToken: {{ .Values.deployment.automountServiceAccount }}
+      {{- end }}
+
+      securityContext: {{ toYaml .Values.deployment.podSecurityContext | nindent 8 }}
+
+      containers: 
+      - name: {{ .Values.deployment.name }}
+        {{- if hasKey .Values.deployment "containerSecurityContext" }}
+        securityContext:
+          {{- toYaml .Values.deployment.containerSecurityContext | nindent 10 }}
+        {{- end }}
+        image: "{{ .Values.deployment.image.name }}:{{ .Values.deployment.image.tag }}"
+        imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+
+        ports:
+        {{- if .Values.service.enabled }}
+        {{- range .Values.service.services }}
+        {{- if .selectDeployment }}
+        {{- range .ports }}
+          - name: {{ .name }}
+            containerPort: {{ .targetPort }}
+            protocol: {{ .protocol }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- if and (hasKey .Values.deployment "readiness") (hasKey .Values.deployment.readiness "openContainerPort") (.Values.deployment.readiness.openContainerPort) }}
+          - name: {{ .Values.deployment.readiness.name }}
+            containerPort: {{ .Values.deployment.readiness.probePort }}
+            protocol: {{ .Values.deployment.readiness.protocol }}
+        {{- end }}
+
+        {{- if or (hasKey .Values.deployment.env "fromSecrets") (hasKey .Values.deployment.env "fromConfigMaps") (hasKey .Values.deployment.env "regular") }}
+        env: 
+        {{- if and (hasKey .Values.deployment.env "fromSecrets") (gt (len .Values.deployment.env.fromSecrets) 0) }}
+        {{- range .Values.deployment.env.fromSecrets }}
+        # Defined for operators only, not needed for the configuration of the services.
+        - name: {{ .envName }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .secretName }}
+              key: {{ .secretKey }}
+        {{- end }}
+        {{- end }}
+
+        {{- if hasKey .Values.deployment.env "regular" }}
+        {{- range $key, $value := .Values.deployment.env.regular }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+
+        {{- end }}
+
+        {{- if and (hasKey .Values.deployment.env "fromConfigMaps") (gt (len .Values.deployment.env.fromConfigMaps) 0) }}
+        {{- range .Values.deployment.env.fromConfigMaps }}
+        envFrom:
+        - configMapRef:
+            name: {{ .cmName }}
+        {{- end }}
+        {{- end }}
+        {{- if .Values.deployment.resources }}
+        resources:
+          {{- toYaml .Values.deployment.resources | nindent 10 }}
+        {{- end }}
+
+        {{- if .Values.deployment.command }}
+        command:
+        {{- range .Values.deployment.command }}
+          - {{ . }}
+        {{- end }}
+        {{- end }}
+
+        {{- if .Values.deployment.args }}
+        args:
+        {{- range .Values.deployment.args }}
+          - {{ . }}
+        {{- end }}
+        {{- end }}
+        
+        {{- if and (hasKey .Values.deployment "readiness") (hasKey .Values.deployment.readiness "includeReadinessProbe") (.Values.deployment.readiness.includeReadinessProbe) }}
+        readinessProbe:
+          httpGet:
+            {{- if and (.Values.deployment.readiness.httpHeaders) (gt (len .Values.deployment.readiness.httpHeaders) 0) }}
+            httpHeaders:
+            {{- range .Values.deployment.readiness.httpHeaders }}
+            - name: {{ .name }}
+              value: {{ .value }}
+            {{- end }}
+            {{- end }}
+            path: {{ .Values.deployment.readiness.probePath }}
+            port: {{ .Values.deployment.readiness.probePort }}
+            scheme: {{ .Values.deployment.readiness.scheme }}
+          {{- if hasKey .Values.deployment.readiness "initialDelay" }}
+          initialDelaySeconds:  {{ .Values.deployment.readiness.initialDelay }}
+          {{- end }}
+          {{- if hasKey .Values.deployment.readiness "period" }}
+          periodSeconds: {{ .Values.deployment.readiness.period }}
+          {{- end }}
+          {{- if hasKey .Values.deployment.readiness "failureThreshold" }}
+          failureThreshold: {{ .Values.deployment.readiness.failureThreshold }}
+          {{- end }}
+          {{- if hasKey .Values.deployment.readiness "successThreshold" }}
+          successThreshold: {{ .Values.deployment.readiness.successThreshold }}
+          {{- end }}
+          {{- if hasKey .Values.deployment.readiness "timeout" }}
+          timeoutSeconds: {{ .Values.deployment.readiness.timeout }}
+          {{- end }}
+        {{- end }}
+        {{- if and (hasKey .Values.deployment "liveness") (hasKey .Values.deployment.liveness "includeLivenessProbe") (.Values.deployment.liveness.includeLivenessProbe) }}
+        livenessProbe:
+          httpGet:
+            {{- if and (.Values.deployment.liveness.httpHeaders) (gt (len .Values.deployment.liveness.httpHeaders) 0) }}
+            httpHeaders:
+            {{- range .Values.deployment.liveness.httpHeaders }}
+            - name: {{ .name }}
+              value: {{ .value }}
+            {{- end }}
+            {{- end }}
+            path: {{ .Values.deployment.liveness.probePath }}
+            port: {{ .Values.deployment.liveness.probePort }}
+            scheme: {{ .Values.deployment.liveness.scheme }}
+          {{- if hasKey .Values.deployment.liveness "initialDelay" }}
+          initialDelaySeconds: {{ .Values.deployment.liveness.initialDelay }}
+          {{- end }}
+          {{- if hasKey .Values.deployment.liveness "period" }}
+          periodSeconds: {{ .Values.deployment.liveness.period }}
+          {{- end }}
+          {{- if hasKey .Values.deployment.liveness "failureThreshold" }}
+          failureThreshold: {{ .Values.deployment.liveness.failureThreshold }}
+          {{- end }}
+          {{- if hasKey .Values.deployment.liveness "successThreshold" }}
+          successThreshold: {{ .Values.deployment.liveness.successThreshold }}
+          {{- end }}
+          {{- if hasKey .Values.deployment.liveness "timeout" }}
+          timeoutSeconds: {{ .Values.deployment.liveness.timeout }}
+          {{- end }}
+        {{- end }}
+
+        {{- if or (gt (len .Values.deployment.volumes.fromSecrets) 0) (gt (len .Values.deployment.volumes.fromConfigMaps) 0) (gt (len .Values.deployment.volumes.fromPvc) 0) (gt (len .Values.deployment.volumes.emptyDir) 0) (gt (len .Values.deployment.volumes.fromNFS) 0)}}
+        volumeMounts:
+        {{- if hasKey .Values.deployment.volumes "fromSecrets" }}
+        {{- range .Values.deployment.volumes.fromSecrets }}
+        - name: {{ .secretName }}
+          mountPath: "{{ .mountPath }}"
+          {{- if .subPath }}
+          subPath: "{{ .subPath }}"
+          {{- end }}
+          readOnly: {{ .readOnly }}
+        {{- end }}
+        {{- end }}
+
+        {{- if hasKey .Values.deployment.volumes "fromPvc" }}
+        {{- range .Values.deployment.volumes.fromPvc }}
+        - name: {{ .pvcName }}
+          mountPath: "{{ .mountPath }}"
+        {{- end }}
+        {{- end }}
+
+        {{- if hasKey .Values.deployment.volumes "fromConfigMaps" }}
+        {{- range .Values.deployment.volumes.fromConfigMaps }}
+        - name: {{ .cmName }}
+          mountPath: "{{ .mountPath }}"
+          {{- if .subPath }}
+          subPath: "{{ .subPath }}"
+          {{- end }}
+          readOnly: {{ .readOnly }}
+        {{- end }}
+        {{- end }}
+
+
+        {{- if hasKey .Values.deployment.volumes "fromNFS" }}
+        {{- range .Values.deployment.volumes.fromNFS }}
+        - name: {{ .NFSName }}
+          mountPath: {{ .mountPath }}
+          readOnly: {{ .readOnly }}
+        {{- end }}
+        {{- end }}      
+
+
+        {{- if hasKey .Values.deployment.volumes "emptyDir"}}
+        {{- range .Values.deployment.volumes.emptyDir }}
+        - name: {{ .dirName }}
+          mountPath: {{ .mountPath }}
+        {{- end }}
+        {{- end }}
+        
+        {{- end }}
+
+      {{- if or (gt (len .Values.deployment.volumes.fromSecrets) 0) (gt (len .Values.deployment.volumes.fromConfigMaps) 0) (gt (len .Values.deployment.volumes.fromPvc) 0) (gt (len .Values.deployment.volumes.emptyDir) 0) (gt (len .Values.deployment.volumes.fromNFS) 0)}}
+      volumes:
+      {{- if hasKey .Values.deployment.volumes "fromSecrets" }}
+      {{- range .Values.deployment.volumes.fromSecrets }}
+      - name: {{ .secretName }}
+        secret:
+          secretName: {{ .secretName }}
+      {{- end }}
+      {{- end }}
+
+      {{- if hasKey .Values.deployment.volumes "fromConfigMaps" }}
+      {{- range .Values.deployment.volumes.fromConfigMaps }}
+      - name: {{ .cmName }}
+        configMap:
+          name: {{ .cmName }}
+          {{- if .items }}
+          items:
+            {{- range .items }}
+            - key: {{ .key }}
+              path: {{ .path }}
+            {{- end }}
+          {{- end }}
+      {{- end }}
+      {{- end }}
+      
+      {{- if hasKey .Values.deployment.volumes "fromPvc" }}
+      {{- range .Values.deployment.volumes.fromPvc }}
+      - name: {{ .pvcName }}
+        persistentVolumeClaim:
+          claimName: {{ .pvcName }}
+      {{- end }}
+      {{- end }}
+
+      {{- if hasKey .Values.deployment.volumes "fromNFS" }}
+      {{- range .Values.deployment.volumes.fromNFS }}
+      - name: {{ .NFSName }}
+        nfs:
+          server: {{ .NFSServer }}
+          path: {{ .NFSPath }}
+      {{- end }}
+      {{- end }}      
+
+      {{- if hasKey .Values.deployment.volumes "emptyDir"}}
+      {{- range .Values.deployment.volumes.emptyDir }}
+      - name: {{ .dirName }}
+        emptyDir:
+          sizeLimit: {{ .sizeLimit }}
+      {{- end }}
+      {{- end }}
+
+      {{- end }}
+      {{- if hasKey .Values.deployment "affinity" }}
+      {{- if or (.Values.deployment.affinity.podSelfAntiAffinity.enabled) (.Values.deployment.affinity.nodeAffinity.enabled)}}
+      affinity:
+        {{- if .Values.deployment.affinity.podSelfAntiAffinity.enabled }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchLabels:
+                app: {{ .Values.deployment.labels.app }}
+        {{- end }}
+        {{- if .Values.deployment.affinity.nodeAffinity.enabled }}
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.deployment.affinity.nodeAffinity.labelKey }}
+                operator: In
+                values:
+                - {{ .Values.deployment.affinity.nodeAffinity.labelValue }}
+        {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- if and (hasKey .Values.deployment "tolerations") (gt (len .Values.deployment.tolerations) 0) }}
+      tolerations:
+      {{- range .Values.deployment.tolerations }}
+        - effect: {{ .effect }}
+          key: {{ .key }}
+          operator: {{ .operator }}
+          {{- if .value }}
+          value: {{ .value }}
+          {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- if and (hasKey .Values.deployment "nodeSelector") ( .Values.deployment.nodeSelector) }}
+      nodeSelector: {{ toYaml .Values.deployment.nodeSelector | nindent 8 }}
+      {{- end }}
+{{- end }}
