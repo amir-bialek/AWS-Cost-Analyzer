@@ -15,7 +15,7 @@ on:
     types: [opened, synchronize, reopened]
           
 env:
-  REPO: bialekamir/aws-cost-report
+  REPO: bialekamir/aws-cost-analyzer
 
 permissions:
   contents: write

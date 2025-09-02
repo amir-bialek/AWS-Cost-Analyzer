@@ -49,7 +49,7 @@ This version is based on the original [AWS CUR Analyzer](https://github.com/cybe
 - **Language Localization**: Converted all Spanish text to English for broader accessibility
 - **Cost Analysis**: Added comprehensive cost tracking including total cost before and after credits, cost breakdown by service and resource, and savings calculation
 - **Enhanced Data Processing**: Increased maximum record limit from 100,000 to 500,000 and added support for cost-related columns
-- **Advanced Architecture**: Added file management system with persistent storage, file upload/delete operations, and storage statistics
+- **Advanced Architecture**: Added file management system with persistent storage for helmcharts.
 - **Improved UI/UX**: Modern gradient-based design with interactive data visualizations and enhanced navigation
 - **Technical Enhancements**: Added comprehensive API endpoints for file management and enhanced data sanitization
 
@@ -60,7 +60,6 @@ This version is based on the original [AWS CUR Analyzer](https://github.com/cybe
 ### Backend
 - **Framework**: FastAPI with Python
 - **Data Processing**: Pandas and PyArrow for Parquet file handling
-- **File Management**: Built-in file manager for uploads and processing
 - **API**: RESTful endpoints for data retrieval and file operations
 
 ### Frontend
@@ -71,10 +70,8 @@ This version is based on the original [AWS CUR Analyzer](https://github.com/cybe
 
 ## Features
 
-- **Parquet File Upload**: Secure upload and validation of AWS CUR Parquet files
 - **Data Visualization**: Interactive charts and tables for cost analysis
 - **Hierarchical View**: Organized breakdown of costs by service and resource
-- **File Management**: Upload, process, and delete CUR files
 - **Storage Statistics**: Monitor storage usage and cleanup old files
 - **Responsive Design**: Modern, gradient-based UI optimized for data exploration
 
