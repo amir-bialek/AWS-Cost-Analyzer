@@ -1,6 +1,7 @@
 # AWS Cost and Usage Report (CUR) Analyzer
 
-<img width="1904" height="923" alt="image" src="https://github.com/user-attachments/assets/9fef0fa1-7c04-4244-bec2-755ed85d431f" />
+<img width="1904" height="923" alt="image" src="https://github.com/user-attachments/assets/48071634-f8e5-4e87-bf9b-50337f8d242e" />
+
 
 
 
@@ -37,9 +38,11 @@ A full-stack web application for analyzing AWS Cost and Usage Reports (CUR) stor
 The CUR Analyzer consists of a FastAPI backend that processes Parquet files and a Next.js frontend that presents the data in an interactive dashboard. The application automatically processes uploaded CUR files and provides various views of cost data including flat tables and hierarchical service breakdowns.
 
 
-<img width="1904" height="865" alt="image" src="https://github.com/user-attachments/assets/9eed24a6-8725-40ca-b8ff-0f51d37de03a" />
+<img width="1904" height="865" alt="image" src="https://github.com/user-attachments/assets/2219a59b-b5b7-4f25-a7fc-dad07ed97d4f" />
 
-<img width="1919" height="901" alt="image" src="https://github.com/user-attachments/assets/d52bb266-090f-4b21-b014-4a4cfcedfeab" />
+
+<img width="1919" height="901" alt="image" src="https://github.com/user-attachments/assets/3a78629c-3bf6-4926-8af0-822e59d12d71" />
+
 
 
 ### About This Project Version
@@ -192,4 +195,5 @@ Features we plan to implement:
 
 
 See the LICENSE file for licensing information.
+
 
