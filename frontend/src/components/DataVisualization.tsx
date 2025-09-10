@@ -146,20 +146,20 @@ export default function DataVisualization({ data, summaryData }: DataVisualizati
             <span className="text-xl font-bold text-green-400 block">{formatCurrency(processedData.totalCostAfterCredit)}</span>
           </div>
           <div className="bg-white/10 rounded-xl p-4">
+            <h4 className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Cost After Credits and Tax</h4>
+            <span className="text-xl font-bold text-purple-400 block">{formatCurrency(processedData.totalCostAfterCreditAndTax)}</span>
+          </div>
+          <div className="bg-white/10 rounded-xl p-4">
             <h4 className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Total Savings</h4>
             <span className="text-xl font-bold text-emerald-400 block">{formatCurrency(processedData.totalSavings)}</span>
           </div>
           <div className="bg-white/10 rounded-xl p-4">
-            <h4 className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Total Services</h4>
-            <span className="text-xl font-bold text-blue-400 block">{processedData.totalServices}</span>
-          </div>
-          <div className="bg-white/10 rounded-xl p-4">
-            <h4 className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Tax Amount</h4>
+            <h4 className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Total Tax</h4>
             <span className="text-xl font-bold text-orange-400 block">{formatCurrency(processedData.totalTaxAmount)}</span>
           </div>
           <div className="bg-white/10 rounded-xl p-4">
-            <h4 className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Cost After Credits and Tax</h4>
-            <span className="text-xl font-bold text-purple-400 block">{formatCurrency(processedData.totalCostAfterCreditAndTax)}</span>
+            <h4 className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Total Services</h4>
+            <span className="text-xl font-bold text-blue-400 block">{processedData.totalServices}</span>
           </div>
         </div>
       </div>
