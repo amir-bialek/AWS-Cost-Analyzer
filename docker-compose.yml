@@ -3,6 +3,8 @@ services:
     build: ./backend
     container_name: cur_analyzer_backend
     restart: unless-stopped
+    volumes:
+      - ./report-files:/app/storage/uploads/
 
   frontend:
     build:

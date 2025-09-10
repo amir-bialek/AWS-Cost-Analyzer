@@ -166,13 +166,6 @@ INPUT_FILE="path/to/hourly.parquet" OUTPUT_FILE="path/to/monthly.parquet" python
 
 Both cost fields exclude tax amounts. If your AWS account is subject to taxes (such as VAT), the totals shown in the application will be **pre-tax amounts only**.
 
-### Hourly to Monthly Conversion Script Behavior
-
-The `convert_hourly_to_monthly.py` script **removes tax information entirely** during the conversion process:
-
-- **Tax records excluded**: Line items with `line_item_line_item_type = "Tax"` are filtered out
-- **Tax column dropped**: The `line_item_tax_type` column is not included in the monthly aggregation
-- **Verification limitation**: The cost verification logic only validates "Usage" type records, ignoring tax line items
 
 ## What's Next
 
