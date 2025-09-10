@@ -334,6 +334,24 @@ def process_parquet_file(file_contents: bytes):
             'line_item_resource_id': 'ResourceId'
         }, inplace=True)
 
+        def calculate_tax_for_flat_item(row):
+            service_code = row['ServiceCode']
+            cost_after_credit = row['CostAfterCredit']
+            
+            # Get tax for this service
+            service_tax = tax_by_service.get(service_code, 0.0)
+            if service_tax <= 0:
+                return cost_after_credit
+            
+            service_total_cost = flat_report[flat_report['ServiceCode'] == service_code]['CostAfterCredit'].sum()
+            if service_total_cost <= 0:
+                return cost_after_credit
+            
+            item_tax_share = (cost_after_credit / service_total_cost) * service_tax
+            return cost_after_credit + item_tax_share
+
+        flat_report['CostAfterTax'] = flat_report.apply(calculate_tax_for_flat_item, axis=1)
+
         def clean_service_name(service_name):
             if isinstance(service_name, str):
                 if service_name.startswith('Amazon '):
@@ -369,7 +387,7 @@ def process_parquet_file(file_contents: bytes):
         if len(flat_report) > MAX_RECORDS:
             flat_report = flat_report.head(MAX_RECORDS)
 
-        numeric_columns = ['UsageAmount', 'CostBeforeCredit', 'CostAfterCredit']
+        numeric_columns = ['UsageAmount', 'CostBeforeCredit', 'CostAfterCredit', 'CostAfterTax']
         for col in numeric_columns:
             flat_report[col] = flat_report[col].replace([float('inf'), float('-inf')], 0)
 

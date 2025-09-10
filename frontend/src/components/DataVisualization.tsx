@@ -10,6 +10,7 @@ interface ServiceCostSummary {
   service: string;
   totalCostBeforeCredit: number;
   totalCostAfterCredit: number;
+  totalCostAfterTax: number;
   resourceCount: number;
   topResources: ReportItem[];
 }
@@ -67,6 +68,7 @@ export default function DataVisualization({ data, summaryData }: DataVisualizati
       .map(([service, items]) => {
         const totalCostBeforeCredit = items.reduce((sum, item) => sum + (item.CostBeforeCredit || 0), 0);
         const totalCostAfterCredit = items.reduce((sum, item) => sum + (item.CostAfterCredit || 0), 0);
+        const totalCostAfterTax = items.reduce((sum, item) => sum + (item.CostAfterTax || item.CostAfterCredit || 0), 0);
         
         const topResources = items
           .sort((a, b) => (b.CostBeforeCredit || 0) - (a.CostBeforeCredit || 0))
@@ -78,11 +80,12 @@ export default function DataVisualization({ data, summaryData }: DataVisualizati
           service,
           totalCostBeforeCredit,
           totalCostAfterCredit,
+          totalCostAfterTax,
           resourceCount: uniqueResources,
           topResources
         };
       })
-      .sort((a, b) => b.totalCostBeforeCredit - a.totalCostBeforeCredit);
+      .sort((a, b) => b.totalCostAfterTax - a.totalCostAfterTax);
 
     const topResourcesOverall: TopResource[] = data
       .sort((a, b) => (b.CostBeforeCredit || 0) - (a.CostBeforeCredit || 0))
@@ -177,12 +180,12 @@ export default function DataVisualization({ data, summaryData }: DataVisualizati
                     <span className="font-semibold text-blue-400 text-sm min-w-6">#{index + 1}</span>
                     <span className="font-semibold text-slate-200">{summary.service}</span>
                   </div>
-                  <span className="font-bold text-emerald-400 font-mono">
-                    {formatCurrency(summary.totalCostAfterCredit)}
+                  <span className="font-bold text-purple-400 font-mono">
+                    {formatCurrency(summary.totalCostAfterTax || summary.totalCostAfterCredit)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm text-slate-400">
-                  <span>Before Credits: {formatCurrency(summary.totalCostBeforeCredit)}</span>
+                  <span>Before Tax: {formatCurrency(summary.totalCostAfterCredit)}</span>
                   <span>{summary.resourceCount} resources</span>
                 </div>
               </div>
