@@ -244,6 +244,9 @@ def process_parquet_file(file_contents: bytes):
 
         df = sanitize_dataframe(df)
 
+        tax_df = df[df['line_item_line_item_type'] == 'Tax'].copy()
+        total_tax_amount = tax_df['line_item_net_unblended_cost'].sum() if not tax_df.empty else 0.0
+
         relevant_line_item_types = ['Usage', 'SavingsPlanCoveredUsage', 'DiscountedUsage']
         df_usage = df[df['line_item_line_item_type'].isin(relevant_line_item_types)].copy()
 
@@ -349,10 +352,21 @@ def process_parquet_file(file_contents: bytes):
                 if isinstance(value, str):
                     record[key] = str(value)[:200].replace('<', '').replace('>', '').replace('"', '').replace("'", '')
 
+        total_cost_before_credit = flat_report['CostBeforeCredit'].sum()
+        total_cost_after_credit = flat_report['CostAfterCredit'].sum()
+        total_cost_after_credit_and_tax = total_cost_after_credit + total_tax_amount
+
         return {
             'flat_data': flat_result,
             'hierarchical_data': hierarchical_data,
-            'service_hierarchies': service_hierarchies
+            'service_hierarchies': service_hierarchies,
+            'summary': {
+                'total_cost_before_credit': total_cost_before_credit,
+                'total_cost_after_credit': total_cost_after_credit,
+                'total_tax_amount': total_tax_amount,
+                'total_cost_after_credit_and_tax': total_cost_after_credit_and_tax,
+                'total_savings': total_cost_before_credit - total_cost_after_credit
+            }
         }
 
     except Exception as e:

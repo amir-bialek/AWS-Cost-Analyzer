@@ -3,6 +3,7 @@ import { ReportItem } from '@/types/ReportItem';
 
 interface DataVisualizationProps {
   data: ReportItem[];
+  summaryData?: any;
 }
 
 interface ServiceCostSummary {
@@ -22,20 +23,36 @@ interface ProcessedData {
   totalCostBeforeCredit: number;
   totalCostAfterCredit: number;
   totalSavings: number;
+  totalTaxAmount: number;
+  totalCostAfterCreditAndTax: number;
   topResourcesOverall: TopResource[];
   totalServices: number;
   totalResources: number;
 }
 
-export default function DataVisualization({ data }: DataVisualizationProps) {
+export default function DataVisualization({ data, summaryData }: DataVisualizationProps) {
   const [processedData, setProcessedData] = useState<ProcessedData | null>(null);
 
   useEffect(() => {
     if (!data || data.length === 0) return;
 
-    const totalCostBeforeCredit = data.reduce((sum, item) => sum + (item.CostBeforeCredit || 0), 0);
-    const totalCostAfterCredit = data.reduce((sum, item) => sum + (item.CostAfterCredit || 0), 0);
-    const totalSavings = totalCostBeforeCredit - totalCostAfterCredit;
+    // Use backend summary data if available, otherwise calculate from flat data
+    let totalCostBeforeCredit, totalCostAfterCredit, totalSavings, totalTaxAmount, totalCostAfterCreditAndTax;
+    
+    if (summaryData) {
+      totalCostBeforeCredit = summaryData.total_cost_before_credit || 0;
+      totalCostAfterCredit = summaryData.total_cost_after_credit || 0;
+      totalSavings = summaryData.total_savings || 0;
+      totalTaxAmount = summaryData.total_tax_amount || 0;
+      totalCostAfterCreditAndTax = summaryData.total_cost_after_credit_and_tax || 0;
+    } else {
+      // Fallback to calculating from flat data
+      totalCostBeforeCredit = data.reduce((sum, item) => sum + (item.CostBeforeCredit || 0), 0);
+      totalCostAfterCredit = data.reduce((sum, item) => sum + (item.CostAfterCredit || 0), 0);
+      totalSavings = totalCostBeforeCredit - totalCostAfterCredit;
+      totalTaxAmount = 0; // No tax data available in flat data
+      totalCostAfterCreditAndTax = totalCostAfterCredit;
+    }
 
     const serviceGroups = data.reduce((acc, item) => {
       const service = item.Service || 'Unknown Service';
@@ -80,11 +97,13 @@ export default function DataVisualization({ data }: DataVisualizationProps) {
       totalCostBeforeCredit,
       totalCostAfterCredit,
       totalSavings,
+      totalTaxAmount,
+      totalCostAfterCreditAndTax,
       topResourcesOverall,
       totalServices: serviceCostSummaries.length,
       totalResources: new Set(data.map(item => item.ResourceId || 'Unassigned')).size
     });
-  }, [data]);
+  }, [data, summaryData]);
 
   if (!processedData) {
     return (
@@ -115,24 +134,32 @@ export default function DataVisualization({ data }: DataVisualizationProps) {
         </p>
       </div>
 
-      <div className="bg-gradient-to-r from-blue-500/10 to-emerald-500/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 mb-8 text-center shadow-2xl">
-        <h3 className="text-2xl font-bold mb-6 text-slate-100">📊 Overall Total Spending Summary</h3>
-        <div className="grid grid-cols-4 gap-6 max-lg:grid-cols-2 max-sm:grid-cols-1">
-          <div className="bg-white/10 rounded-xl p-6">
-            <h4 className="text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Cost Before Credits</h4>
-            <span className="text-2xl font-bold text-red-400 block">{formatCurrency(processedData.totalCostBeforeCredit)}</span>
+      <div className="bg-gradient-to-r from-blue-500/10 to-emerald-500/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 mb-8 text-center shadow-2xl">
+        <h3 className="text-2xl font-bold mb-4 text-slate-100">📊 Overall Total Spending Summary</h3>
+        <div className="grid grid-cols-6 gap-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
+          <div className="bg-white/10 rounded-xl p-4">
+            <h4 className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Cost Before Credits</h4>
+            <span className="text-xl font-bold text-red-400 block">{formatCurrency(processedData.totalCostBeforeCredit)}</span>
           </div>
-          <div className="bg-white/10 rounded-xl p-6">
-            <h4 className="text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Cost After Credits</h4>
-            <span className="text-2xl font-bold text-green-400 block">{formatCurrency(processedData.totalCostAfterCredit)}</span>
+          <div className="bg-white/10 rounded-xl p-4">
+            <h4 className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Cost After Credits</h4>
+            <span className="text-xl font-bold text-green-400 block">{formatCurrency(processedData.totalCostAfterCredit)}</span>
           </div>
-          <div className="bg-white/10 rounded-xl p-6">
-            <h4 className="text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Total Savings</h4>
-            <span className="text-2xl font-bold text-emerald-400 block">{formatCurrency(processedData.totalSavings)}</span>
+          <div className="bg-white/10 rounded-xl p-4">
+            <h4 className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Total Savings</h4>
+            <span className="text-xl font-bold text-emerald-400 block">{formatCurrency(processedData.totalSavings)}</span>
           </div>
-          <div className="bg-white/10 rounded-xl p-6">
-            <h4 className="text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Services</h4>
-            <span className="text-2xl font-bold text-blue-400 block">{processedData.totalServices}</span>
+          <div className="bg-white/10 rounded-xl p-4">
+            <h4 className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Total Services</h4>
+            <span className="text-xl font-bold text-blue-400 block">{processedData.totalServices}</span>
+          </div>
+          <div className="bg-white/10 rounded-xl p-4">
+            <h4 className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Tax Amount</h4>
+            <span className="text-xl font-bold text-orange-400 block">{formatCurrency(processedData.totalTaxAmount)}</span>
+          </div>
+          <div className="bg-white/10 rounded-xl p-4">
+            <h4 className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Cost After Credits and Tax</h4>
+            <span className="text-xl font-bold text-purple-400 block">{formatCurrency(processedData.totalCostAfterCreditAndTax)}</span>
           </div>
         </div>
       </div>

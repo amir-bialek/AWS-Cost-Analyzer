@@ -10,6 +10,7 @@ export default function Home() {
   const [flatData, setFlatData] = useState<ReportItem[] | null>(null);
   const [hierarchicalData, setHierarchicalData] = useState<HierarchicalData | null>(null);
   const [serviceHierarchies, setServiceHierarchies] = useState<Record<string, HierarchicalData> | null>(null);
+  const [summaryData, setSummaryData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [isCurSetupModalOpen, setIsCurSetupModalOpen] = useState<boolean>(false);
@@ -86,6 +87,7 @@ export default function Home() {
         setFlatData(data.flat_data);
         setHierarchicalData(data.hierarchical_data);
         setServiceHierarchies(data.service_hierarchies);
+        setSummaryData(data.summary);
         setSelectedFileId(fileId);
         saveStateToStorage(fileId);
         
@@ -194,6 +196,7 @@ export default function Home() {
           flatData={flatData!} 
           hierarchicalData={hierarchicalData!}
           serviceHierarchies={serviceHierarchies!}
+          summaryData={summaryData}
           availableFiles={availableFiles}
           selectedFileId={selectedFileId}
           onFileSelection={handleFileSelection}
