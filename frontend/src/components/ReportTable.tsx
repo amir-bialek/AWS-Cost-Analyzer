@@ -101,7 +101,7 @@ export default function ReportTable({ flatData, hierarchicalData, serviceHierarc
               >
                 {availableFiles.map((file) => (
                   <option key={file.id} value={file.id} className="bg-slate-800 text-slate-200">
-                    {file.original_filename} ({new Date(file.upload_date).toLocaleDateString()})
+                    {file.original_filename}
                   </option>
                 ))}
               </select>
