@@ -49,14 +49,16 @@ const HierarchicalResourceView: React.FC<HierarchicalResourceViewProps> = ({ dat
       return {
         totalResources: 0,
         totalCostBeforeCredit: 0,
-        totalCostAfterCredit: 0
+        totalCostAfterCredit: 0,
+        totalCostAfterTax: 0
       };
     }
     
     return {
       totalResources: filteredAndSortedResources.length,
       totalCostBeforeCredit: filteredAndSortedResources.reduce((sum, resource) => sum + resource.totalCostBeforeCredit, 0),
-      totalCostAfterCredit: filteredAndSortedResources.reduce((sum, resource) => sum + resource.totalCostAfterCredit, 0)
+      totalCostAfterCredit: filteredAndSortedResources.reduce((sum, resource) => sum + resource.totalCostAfterCredit, 0),
+      totalCostAfterTax: filteredAndSortedResources.reduce((sum, resource) => sum + (resource.totalCostAfterTax || 0), 0)
     };
   }, [filteredAndSortedResources]);
 
@@ -115,7 +117,7 @@ const HierarchicalResourceView: React.FC<HierarchicalResourceViewProps> = ({ dat
         </div>
       )}
 
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 flex-shrink-0">
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0">
         <div className="bg-white/5 rounded-lg p-4 border border-white/10">
           <div className="text-slate-400 text-sm font-medium">
             {serviceFilter ? `${serviceFilter} Resources` : 
@@ -141,6 +143,15 @@ const HierarchicalResourceView: React.FC<HierarchicalResourceViewProps> = ({ dat
             {formatCurrency(filteredSummary.totalCostAfterCredit)}
           </div>
         </div>
+        <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+          <div className="text-slate-400 text-sm font-medium">
+            {serviceFilter ? `${serviceFilter} Cost After Tax` : 
+             serviceTypeFilter !== 'all' ? `${serviceTypeFilter} Cost After Tax` : 'Total Cost After Tax'}
+          </div>
+          <div className="text-2xl font-bold text-purple-400">
+            {formatCurrency(filteredSummary.totalCostAfterTax)}
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 bg-white/[0.03] rounded-2xl border border-white/10 overflow-hidden shadow-2xl backdrop-blur-sm">
@@ -156,6 +167,9 @@ const HierarchicalResourceView: React.FC<HierarchicalResourceViewProps> = ({ dat
                 </th>
                 <th className="text-left p-2 font-semibold text-slate-200 text-sm tracking-wide border-r border-white/10 bg-gradient-to-b from-white/5 to-transparent">
                   Cost After Credit
+                </th>
+                <th className="text-left p-2 font-semibold text-slate-200 text-sm tracking-wide border-r border-white/10 bg-gradient-to-b from-white/5 to-transparent">
+                  Cost After Tax
                 </th>
                 <th className="text-left p-2 font-semibold text-slate-200 text-sm tracking-wide border-r border-white/10 bg-gradient-to-b from-white/5 to-transparent">
                   Service Code

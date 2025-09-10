@@ -108,6 +108,9 @@ const CategoryRow: React.FC<CategoryRowProps> = ({ category, isExpanded, onToggl
           <td className="p-2 text-emerald-400 text-sm border-r border-white/5 font-mono">
             {formatCurrency(item.CostAfterCredit)}
           </td>
+          <td className="p-2 text-purple-400 text-sm border-r border-white/5 font-mono">
+            {formatCurrency(item.CostAfterTax || item.CostAfterCredit)}
+          </td>
           <td className="p-2 text-slate-300 text-sm border-r border-white/5 font-mono">
             {item.ServiceCode}
           </td>

@@ -8,6 +8,7 @@ interface ReportTableProps {
   flatData: ReportItem[];
   hierarchicalData: HierarchicalData;
   serviceHierarchies: Record<string, HierarchicalData>;
+  summaryData?: any;
   availableFiles?: FileMetadata[];
   selectedFileId?: string | null;
   onFileSelection?: (fileId: string) => void;
@@ -16,7 +17,7 @@ interface ReportTableProps {
   loadingDots?: string;
 }
 
-export default function ReportTable({ flatData, hierarchicalData, serviceHierarchies, availableFiles, selectedFileId, onFileSelection, onBack, isLoading, loadingDots }: ReportTableProps) {
+export default function ReportTable({ flatData, hierarchicalData, serviceHierarchies, summaryData, availableFiles, selectedFileId, onFileSelection, onBack, isLoading, loadingDots }: ReportTableProps) {
   const [activeTab, setActiveTab] = useState<string>('');
   const [viewMode, setViewMode] = useState<'flat' | 'hierarchical'>('hierarchical');
   const [isInfoModalOpen, setIsInfoModalOpen] = useState<boolean>(false);
@@ -100,7 +101,7 @@ export default function ReportTable({ flatData, hierarchicalData, serviceHierarc
               >
                 {availableFiles.map((file) => (
                   <option key={file.id} value={file.id} className="bg-slate-800 text-slate-200">
-                    {file.original_filename} ({new Date(file.upload_date).toLocaleDateString()})
+                    {file.original_filename}
                   </option>
                 ))}
               </select>
@@ -169,7 +170,7 @@ export default function ReportTable({ flatData, hierarchicalData, serviceHierarc
       </div>
 
       {activeTab === visualizationTabKey ? (
-        <DataVisualization data={flatData} />
+        <DataVisualization data={flatData} summaryData={summaryData} />
       ) : activeTab === hierarchicalTabKey ? (
         <HierarchicalResourceView data={hierarchicalData} />
       ) : (

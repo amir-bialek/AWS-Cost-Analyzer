@@ -6,6 +6,7 @@ export interface ReportItem {
   UsageAmount: number;
   CostBeforeCredit: number;
   CostAfterCredit: number;
+  CostAfterTax?: number;
   ResourceId: string;
 }
 
@@ -22,6 +23,7 @@ export interface ResourceSummary {
   serviceCode: string;
   totalCostBeforeCredit: number;
   totalCostAfterCredit: number;
+  totalCostAfterTax?: number;
   categories: CostCategory[];
 }
 
@@ -31,13 +33,23 @@ export interface HierarchicalData {
     totalResources: number;
     totalCostBeforeCredit: number;
     totalCostAfterCredit: number;
+    totalCostAfterTax?: number;
   };
+}
+
+export interface CostSummary {
+  total_cost_before_credit: number;
+  total_cost_after_credit: number;
+  total_tax_amount: number;
+  total_cost_after_credit_and_tax: number;
+  total_savings: number;
 }
 
 export interface ApiResponse {
   flat_data: ReportItem[];
   hierarchical_data: HierarchicalData;
   service_hierarchies: Record<string, HierarchicalData>;
+  summary?: CostSummary;
   file_id?: string; // Added for file persistence
 }
 

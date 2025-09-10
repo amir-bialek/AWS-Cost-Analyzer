@@ -73,8 +73,10 @@ This version is based on the original [AWS CUR Analyzer](https://github.com/cybe
 
 ## Features
 
-- **Data Visualization**: Interactive charts and tables for cost analysis
-- **Hierarchical View**: Organized breakdown of costs by service and resource
+- **Comprehensive Tax Support**: Full tax analysis including service-level tax breakdown and tax-inclusive cost calculations
+- **Complete Cost Progression**: View costs at every stage - before credits, after credits, and after tax
+- **Data Visualization**: Interactive charts and tables for cost analysis with tax information
+- **Hierarchical View**: Organized breakdown of costs by service and resource, including tax allocation
 - **Storage Statistics**: Monitor storage usage and cleanup old files
 - **Responsive Design**: Modern, gradient-based UI optimized for data exploration
 
@@ -87,16 +89,14 @@ This version is based on the original [AWS CUR Analyzer](https://github.com/cybe
 ### Running with Docker Compose
 
 1. Clone the repository
-2. Place your AWS CUR Parquet files in the `sample/` directory.
+2. Place your AWS CUR Parquet files in the `report-files/` directory (this folder is automatically mounted to the backend container)
 3. Run the application:
    ```bash
    docker-compose up
    ```
 4. Access the application at `http://localhost:3000`
-5. To copy sample files to the running backend container:
-   ```bash
-   docker cp sample/. cur_analyzer_backend:/app/storage/uploads/
-   ```
+
+The `report-files/` directory is automatically mounted as a volume to `/app/storage/uploads/` inside the backend container, so any files you place there will be immediately available to the application.
 
 ### Development Setup
 
@@ -118,12 +118,12 @@ npm run dev
 
 - `/backend/` - FastAPI application with data processing logic
 - `/frontend/` - Next.js application with React components
-- `/sample/` - Sample Parquet files for testing
+- `/report-files/` - Directory for AWS CUR Parquet files (mounted as volume to backend)
 - `docker-compose.yml` - Container orchestration configuration
 
 ### Backend Storage
 
-The backend container stores uploaded files at `/app/storage/uploads/` inside the container.
+The `report-files/` directory is mounted as a volume to `/app/storage/uploads/` inside the backend container. Files placed in the local `report-files/` directory are automatically available to the backend service.
 
 ## API Endpoints
 
@@ -155,31 +155,29 @@ INPUT_FILE="path/to/hourly.parquet" OUTPUT_FILE="path/to/monthly.parquet" python
 - **Performance**: Reduces file size and record count significantly for better application performance
 - **Error Handling**: Exits with appropriate status codes for automation and scripting
 
-## Important: Tax Information Handling
+## Tax Information Support
 
-### UI Cost Display (Pre-Tax Only)
+### Complete Tax Analysis
 
-**The application displays costs WITHOUT tax information included.** The UI processes and displays only these AWS CUR fields:
+**The application provides comprehensive tax analysis and reporting.** The UI processes and displays these AWS CUR cost fields with full tax integration:
 
 - **Cost Before Credit**: `line_item_unblended_cost` - Raw usage costs before any discounts or credits
-- **Cost After Credit**: `line_item_net_unblended_cost` - Costs after discounts and credits are applied
+- **Cost After Credit**: `line_item_net_unblended_cost` - Costs after discounts and credits are applied  
+- **Cost After Tax**: Calculated total including proportionally distributed tax amounts
+- **Tax Amount**: Service-level and resource-level tax breakdown from `line_item_line_item_type = 'Tax'`
 
-Both cost fields exclude tax amounts. If your AWS account is subject to taxes (such as VAT), the totals shown in the application will be **pre-tax amounts only**.
+### Tax Features
 
-### Hourly to Monthly Conversion Script Behavior
+- **Service-Level Tax Breakdown**: See exactly how much tax you paid for each AWS service (EC2, S3, EBS, etc.)
+- **Resource-Level Tax Allocation**: Tax amounts are proportionally distributed to individual resources based on their usage
+- **Complete Cost Progression**: View the full cost journey from initial cost → after credits → after tax
+- **Tax-Inclusive Visualizations**: All charts, tables, and summaries show final costs including tax
+- **Consistent Tax Display**: Purple color coding throughout the UI indicates tax-inclusive amounts
 
-The `convert_hourly_to_monthly.py` script **removes tax information entirely** during the conversion process:
-
-- **Tax records excluded**: Line items with `line_item_line_item_type = "Tax"` are filtered out
-- **Tax column dropped**: The `line_item_tax_type` column is not included in the monthly aggregation
-- **Verification limitation**: The cost verification logic only validates "Usage" type records, ignoring tax line items
 
 ## What's Next
 
 Features we plan to implement:
-
-- **Tax information support**: Add the ability to display and analyze tax charges from AWS CUR reports, including both pre-tax and tax-inclusive cost views.
-
 
 - **S3 bucket integration**: Add instructions and Terraform configurations for mounting S3 buckets with proper IAM permissions to backend service.
 
