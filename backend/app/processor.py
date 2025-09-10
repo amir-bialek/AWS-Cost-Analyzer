@@ -143,7 +143,7 @@ def get_cost_category(service_code: str, usage_type: str) -> str:
     else:
         return "Other"
 
-def build_resource_hierarchy(df: pd.DataFrame, service_filter: str = None) -> Dict[str, Any]:
+def build_resource_hierarchy(df: pd.DataFrame, service_filter: str = None, tax_by_service: Dict[str, float] = None) -> Dict[str, Any]:
     
     if service_filter:
         def clean_service_name(service_name):
@@ -165,7 +165,8 @@ def build_resource_hierarchy(df: pd.DataFrame, service_filter: str = None) -> Di
                 'summary': {
                     'totalResources': 0,
                     'totalCostBeforeCredit': 0,
-                    'totalCostAfterCredit': 0
+                    'totalCostAfterCredit': 0,
+                    'totalCostAfterTax': 0
                 }
             }
     
@@ -184,6 +185,20 @@ def build_resource_hierarchy(df: pd.DataFrame, service_filter: str = None) -> Di
         total_cost_before_credit = resource_df['line_item_unblended_cost'].sum()
         total_cost_after_credit = resource_df['line_item_net_unblended_cost'].sum()
         
+        # Calculate proportional tax for this resource
+        service_tax = 0.0
+        if tax_by_service and service_code in tax_by_service:
+            service_tax = tax_by_service[service_code]
+        
+        # Calculate this resource's share of the service's total cost after credit
+        service_total_cost = df[df['line_item_product_code'] == service_code]['line_item_net_unblended_cost'].sum()
+        if service_total_cost > 0 and service_tax > 0:
+            resource_tax_share = (total_cost_after_credit / service_total_cost) * service_tax
+        else:
+            resource_tax_share = 0.0
+            
+        total_cost_after_tax = total_cost_after_credit + resource_tax_share
+        
         categories = {}
         
         for _, row in resource_df.iterrows():
@@ -200,6 +215,11 @@ def build_resource_hierarchy(df: pd.DataFrame, service_filter: str = None) -> Di
             categories[category]['cost_before_credit'] += row['line_item_unblended_cost']
             categories[category]['cost_after_credit'] += row['line_item_net_unblended_cost']
             
+            # Calculate proportional tax for this line item
+            line_item_tax = 0.0
+            if total_cost_after_credit > 0 and resource_tax_share > 0:
+                line_item_tax = (row['line_item_net_unblended_cost'] / total_cost_after_credit) * resource_tax_share
+            
             line_item = {
                 'Service': row['EffectiveServiceName'],
                 'ServiceCode': row['line_item_product_code'],
@@ -208,6 +228,7 @@ def build_resource_hierarchy(df: pd.DataFrame, service_filter: str = None) -> Di
                 'UsageAmount': row['line_item_usage_amount'],
                 'CostBeforeCredit': row['line_item_unblended_cost'],
                 'CostAfterCredit': row['line_item_net_unblended_cost'],
+                'CostAfterTax': row['line_item_net_unblended_cost'] + line_item_tax,
                 'ResourceId': row['line_item_resource_id']
             }
             categories[category]['line_items'].append(line_item)
@@ -221,6 +242,7 @@ def build_resource_hierarchy(df: pd.DataFrame, service_filter: str = None) -> Di
             'serviceCode': service_code,
             'totalCostBeforeCredit': total_cost_before_credit,
             'totalCostAfterCredit': total_cost_after_credit,
+            'totalCostAfterTax': total_cost_after_tax,
             'categories': categories_list
         }
         
@@ -233,7 +255,8 @@ def build_resource_hierarchy(df: pd.DataFrame, service_filter: str = None) -> Di
         'summary': {
             'totalResources': len(resources),
             'totalCostBeforeCredit': sum(r['totalCostBeforeCredit'] for r in resources),
-            'totalCostAfterCredit': sum(r['totalCostAfterCredit'] for r in resources)
+            'totalCostAfterCredit': sum(r['totalCostAfterCredit'] for r in resources),
+            'totalCostAfterTax': sum(r['totalCostAfterTax'] for r in resources)
         }
     }
 
@@ -246,6 +269,11 @@ def process_parquet_file(file_contents: bytes):
 
         tax_df = df[df['line_item_line_item_type'] == 'Tax'].copy()
         total_tax_amount = tax_df['line_item_net_unblended_cost'].sum() if not tax_df.empty else 0.0
+        
+        # Calculate tax by service
+        tax_by_service = {}
+        if not tax_df.empty:
+            tax_by_service = tax_df.groupby('line_item_product_code')['line_item_net_unblended_cost'].sum().to_dict()
 
         relevant_line_item_types = ['Usage', 'SavingsPlanCoveredUsage', 'DiscountedUsage']
         df_usage = df[df['line_item_line_item_type'].isin(relevant_line_item_types)].copy()
@@ -316,7 +344,7 @@ def process_parquet_file(file_contents: bytes):
 
         flat_report['Service'] = flat_report['Service'].apply(clean_service_name)
 
-        hierarchical_data = build_resource_hierarchy(df_usage)
+        hierarchical_data = build_resource_hierarchy(df_usage, None, tax_by_service)
 
         def clean_service_name_for_tab(service_name):
             if isinstance(service_name, str):
@@ -334,7 +362,7 @@ def process_parquet_file(file_contents: bytes):
         
         service_hierarchies = {}
         for service in sorted(unique_services):
-            hierarchy_data = build_resource_hierarchy(df_usage, service)
+            hierarchy_data = build_resource_hierarchy(df_usage, service, tax_by_service)
             if hierarchy_data and hierarchy_data.get('resources') and len(hierarchy_data['resources']) > 0:
                 service_hierarchies[service] = hierarchy_data
 

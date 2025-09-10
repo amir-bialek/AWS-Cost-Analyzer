@@ -103,6 +103,11 @@ const ResourceRow: React.FC<ResourceRowProps> = ({ resource }) => {
         }`}>
           {formatCurrency(resource.totalCostAfterCredit)}
         </td>
+        <td className={`p-4 text-sm border-r border-white/5 font-mono font-semibold ${
+          hasZeroCost ? 'text-slate-500' : 'text-purple-300'
+        }`}>
+          {formatCurrency(resource.totalCostAfterTax || resource.totalCostAfterCredit)}
+        </td>
         <td className="p-2 text-slate-400 text-sm border-r border-white/5 font-mono">
           {resource.serviceCode}
         </td>

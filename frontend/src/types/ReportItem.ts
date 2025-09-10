@@ -6,6 +6,7 @@ export interface ReportItem {
   UsageAmount: number;
   CostBeforeCredit: number;
   CostAfterCredit: number;
+  CostAfterTax?: number;
   ResourceId: string;
 }
 
@@ -22,6 +23,7 @@ export interface ResourceSummary {
   serviceCode: string;
   totalCostBeforeCredit: number;
   totalCostAfterCredit: number;
+  totalCostAfterTax?: number;
   categories: CostCategory[];
 }
 
@@ -31,6 +33,7 @@ export interface HierarchicalData {
     totalResources: number;
     totalCostBeforeCredit: number;
     totalCostAfterCredit: number;
+    totalCostAfterTax?: number;
   };
 }
 
