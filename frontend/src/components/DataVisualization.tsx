@@ -71,7 +71,7 @@ export default function DataVisualization({ data, summaryData }: DataVisualizati
         const totalCostAfterTax = items.reduce((sum, item) => sum + (item.CostAfterTax || item.CostAfterCredit || 0), 0);
         
         const topResources = items
-          .sort((a, b) => (b.CostBeforeCredit || 0) - (a.CostBeforeCredit || 0))
+          .sort((a, b) => (b.CostAfterTax || b.CostAfterCredit || 0) - (a.CostAfterTax || a.CostAfterCredit || 0))
           .slice(0, 5);
         
         const uniqueResources = new Set(items.map(item => item.ResourceId || 'Unassigned')).size;
@@ -88,7 +88,7 @@ export default function DataVisualization({ data, summaryData }: DataVisualizati
       .sort((a, b) => b.totalCostAfterTax - a.totalCostAfterTax);
 
     const topResourcesOverall: TopResource[] = data
-      .sort((a, b) => (b.CostBeforeCredit || 0) - (a.CostBeforeCredit || 0))
+      .sort((a, b) => (b.CostAfterTax || b.CostAfterCredit || 0) - (a.CostAfterTax || a.CostAfterCredit || 0))
       .slice(0, 10)
       .map((item, index) => ({
         ...item,
@@ -217,7 +217,7 @@ export default function DataVisualization({ data, summaryData }: DataVisualizati
                   </div>
                 </div>
                 <span className="text-yellow-400 font-medium text-sm">{resource.Service}</span>
-                <span className="text-emerald-400 font-semibold font-mono text-sm">{formatCurrency(resource.CostAfterCredit || 0)}</span>
+                <span className="text-purple-400 font-semibold font-mono text-sm">{formatCurrency(resource.CostAfterTax || resource.CostAfterCredit || 0)}</span>
               </div>
             ))}
           </div>
@@ -246,7 +246,7 @@ export default function DataVisualization({ data, summaryData }: DataVisualizati
                         <span className="text-slate-400 text-xs">{resource.UsageType}</span>
                       </div>
                     </div>
-                    <span className="text-emerald-400 font-semibold font-mono">{formatCurrency(resource.CostAfterCredit || 0)}</span>
+                    <span className="text-purple-400 font-semibold font-mono">{formatCurrency(resource.CostAfterTax || resource.CostAfterCredit || 0)}</span>
                   </div>
                 ))}
               </div>
