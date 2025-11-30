@@ -24,6 +24,7 @@ A full-stack web application for analyzing AWS Cost and Usage Reports (CUR) stor
     - [Development Setup](#development-setup)
       - [Backend](#backend-1)
       - [Frontend](#frontend-1)
+      - [Terraform](#terraform)
   - [File Structure](#file-structure)
     - [Backend Storage](#backend-storage)
   - [API Endpoints](#api-endpoints)
@@ -55,6 +56,7 @@ This version is based on the original [AWS CUR Analyzer](https://github.com/cybe
 - **Advanced Architecture**: Added file management system with persistent storage for helmcharts.
 - **Improved UI/UX**: Modern gradient-based design with interactive data visualizations and enhanced navigation
 - **Technical Enhancements**: Added comprehensive API endpoints for file management and enhanced data sanitization
+- **Automated CUR Processing**: Added AWS Lambda functions to automatically process and transfer CUR files from AWS-generated locations to the application's expected format
 
 
 
@@ -113,6 +115,16 @@ cd frontend
 npm install
 npm run dev
 ```
+
+#### Terraform
+
+The repository includes Terraform code in the `terraform/` directory to deploy AWS Lambda functions that automatically process CUR files from AWS-generated locations to the format expected by the application. The Terraform configuration includes:
+
+- **cur-monthly-processor**: Automatically processes the previous month's CUR report on the 3rd of every month via EventBridge Scheduler. Copies files from the AWS-generated location to the application's expected format and sends Slack notifications.
+
+- **cur-historical-sync**: Manually triggered function to backfill historical CUR files. Only copies files that don't already exist in the destination, making it safe to run multiple times.
+
+Review and update variables in `terraform/variables.tf` as needed before deployment.
 
 ## File Structure
 
