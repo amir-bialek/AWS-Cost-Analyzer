@@ -46,6 +46,20 @@ resource "aws_iam_role_policy_attachment" "attach_lambda_basic_execution_for_cur
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+# Archive file for Monthly CUR Processor
+data "archive_file" "cur_monthly_processor" {
+  type        = "zip"
+  source_dir  = "${path.module}/functions/cur-monthly-processor"
+  output_path = "${path.module}/functions/cur-monthly-processor.zip"
+}
+
+# Archive file for Historical CUR Sync
+data "archive_file" "cur_historical_sync" {
+  type        = "zip"
+  source_dir  = "${path.module}/functions/cur-historical-sync"
+  output_path = "${path.module}/functions/cur-historical-sync.zip"
+}
+
 # Lambda Function Module for Monthly CUR Processor
 module "lambda_function_cur_monthly_processor" {
   source  = "terraform-aws-modules/lambda/aws"
@@ -58,8 +72,8 @@ module "lambda_function_cur_monthly_processor" {
   runtime       = "python3.12"
   lambda_role   = aws_iam_role.role_for_cur_processing.arn
   create_role   = false
-  create_package         = true
-  source_path = "functions/cur-monthly-processor"
+  create_package         = false
+  local_existing_package = data.archive_file.cur_monthly_processor.output_path
   cloudwatch_logs_retention_in_days = 7
   timeout       = 60
 
@@ -149,8 +163,8 @@ module "lambda_function_cur_historical_sync" {
   runtime       = "python3.12"
   lambda_role   = aws_iam_role.role_for_cur_processing.arn
   create_role   = false
-  create_package         = true
-  source_path = "functions/cur-historical-sync"
+  create_package         = false
+  local_existing_package = data.archive_file.cur_historical_sync.output_path
   cloudwatch_logs_retention_in_days = 7
   timeout       = 300
 
